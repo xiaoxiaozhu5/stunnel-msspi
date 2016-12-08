@@ -371,6 +371,18 @@ NOEXPORT void remote_start(CLI *c) {
         (long)c->remote_fd.fd);
 }
 
+#ifdef MSSPISSL
+static int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
+{
+    return BIO_read( c->rbio, buf, len );
+}
+
+static int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
+{
+    return BIO_write( c->wbio, buf, len );
+}
+#endif
+
 NOEXPORT void ssl_start(CLI *c) {
     int i, err;
     int unsafe_openssl;
@@ -409,6 +421,26 @@ NOEXPORT void ssl_start(CLI *c) {
         }
         SSL_set_accept_state(c->ssl);
     }
+
+#ifdef MSSPISSL
+    c->msh = NULL;
+    if( c->opt->option.msspi )
+    {
+        c->rbio = SSL_get_rbio( c->ssl );
+        c->wbio = SSL_get_wbio( c->ssl );
+        c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
+        if( !c->msh ) {
+            sslerror( "msspi_open" );
+            longjmp( c->err, 1 );
+        }
+        if( c->opt->sni )
+            msspi_set_hostname( c->msh, c->opt->sni );
+        if( c->opt->option.require_cert )
+            msspi_set_peerauth( c->msh, 1 );
+        if( c->opt->cert )
+            msspi_set_mycert( c->msh, c->opt->cert, 0 );
+    }
+#endif
 
     if(c->opt->option.require_cert)
         s_log(LOG_INFO, "Peer certificate required");
@@ -475,6 +507,13 @@ NOEXPORT void ssl_start(CLI *c) {
             sslerror("SSL_accept");
         longjmp(c->err, 1);
     }
+#ifdef MSSPISSL
+    if( c->msh )
+    {
+        s_log( LOG_INFO, "MSSPI %s", c->opt->option.client ? "connected" : "accepted" );
+        return;
+    }
+#endif
     s_log(LOG_INFO, "SSL %s: %s",
         c->opt->option.client ? "connected" : "accepted",
         SSL_session_reused(c->ssl) ?
@@ -1352,6 +1391,10 @@ NOEXPORT SOCKET connect_remote(CLI *c) {
         if(!connect_init(c, c->connect_addr.addr[ind_cur].sa.sa_family) &&
                 !s_connect(c, &c->connect_addr.addr[ind_cur],
                     addr_len(&c->connect_addr.addr[ind_cur]))) {
+#ifdef MSSPISSL
+            if( c->msh );
+            else
+#endif
             if(c->ssl)
                 idx_cache_set(SSL_get_session(c->ssl),
                     &c->connect_addr.addr[ind_cur]);
