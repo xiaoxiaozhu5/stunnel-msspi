@@ -2919,6 +2919,11 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         }
         return NULL; /* OK */
     case CMD_END:
+#ifdef MSSPISSL
+        if( section->option.msspi )
+            break;
+        else
+#endif
         if((section->option.verify_chain || section->option.verify_peer) &&
                 !section->ca_file && !section->ca_dir)
             return "Either \"CAfile\" or \"CApath\" has to be configured";
