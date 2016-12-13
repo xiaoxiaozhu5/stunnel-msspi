@@ -510,7 +510,44 @@ NOEXPORT void ssl_start(CLI *c) {
 #ifdef MSSPISSL
     if( c->msh )
     {
-        s_log( LOG_INFO, "MSSPI %s", c->opt->option.client ? "connected" : "accepted" );
+        s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
+
+        if( c->opt->option.verify_chain || c->opt->option.verify_peer )
+        {
+            int level = LOG_ERR;
+            const char * errinfo = "MSSPI_VERIFY_ERROR";
+            switch( msspi_verify( c->msh ) )
+            {
+            case MSSPI_VERIFY_OK:
+                level = LOG_INFO;
+                errinfo = "MSSPI_VERIFY_OK";
+                break;
+            default:
+                break;
+            }
+
+            s_log( level, "msspi: verify = %s", errinfo );
+            if( level == LOG_ERR )
+                longjmp( c->err, 1 );
+        }
+
+        if( c->opt->log_level < LOG_INFO )
+            return;
+
+        {
+            PSecPkgContext_CipherInfo cipherinfo = msspi_get_cipherinfo( c->msh );
+
+            if( !cipherinfo )
+            {
+                s_log( LOG_ERR, "msspi: get_cipherinfo failed" );
+                longjmp( c->err, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: TLS protocol = %s", msspi_get_version( c->msh ) );
+            s_log( LOG_INFO, "msspi: cipher suite = %ws", cipherinfo->szCipherSuite );
+            s_log( LOG_INFO, "msspi: cipher = %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+        }
+
         return;
     }
 #endif
