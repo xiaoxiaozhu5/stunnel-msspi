@@ -1401,24 +1401,42 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         break;
     }
 
+#ifdef MSSPISSL
+    /* msspi */
+    switch( cmd ) {
+    case CMD_BEGIN:
+        section->option.msspi = 1;
+        break;
+    case CMD_EXEC:
+        if( strcasecmp( opt, "msspi" ) )
+            break;
+        if( !strcasecmp( arg, "yes" ) )
+            section->option.msspi = 1;
+        else if( !strcasecmp( arg, "no" ) )
+            section->option.msspi = 0;
+        else
+            return "The argument needs to be either 'yes' or 'no'";
+        return NULL; /* OK */
+    case CMD_END:
+        break;
+    case CMD_FREE:
+        break;
+    case CMD_DEFAULT:
+        break;
+    case CMD_HELP:
+        s_log( LOG_NOTICE, "%-22s = yes|no msspi mode", "msspi" );
+        break;
+    }
+#endif
+
     /* client */
     switch(cmd) {
     case CMD_BEGIN:
         section->option.client=0;
         break;
     case CMD_EXEC:
-#ifdef MSSPISSL
-        if( strcasecmp( opt, "client" ) &&
-            strcasecmp( opt, "msspi_client" ) )
-            break;
-        if( !strcasecmp( opt, "msspi_client" ) )
-            section->option.msspi = 1;
-        else
-            section->option.msspi = 0;
-#else
         if(strcasecmp(opt, "client"))
             break;
-#endif
         if(!strcasecmp(arg, "yes"))
             section->option.client=1;
         else if(!strcasecmp(arg, "no"))
@@ -2921,7 +2939,10 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
     case CMD_END:
 #ifdef MSSPISSL
         if( section->option.msspi )
-            break;
+        {
+            if( section->option.verify_peer && !section->ca_dir )
+                return "\"CApath\" has to be configured";
+        }
         else
 #endif
         if((section->option.verify_chain || section->option.verify_peer) &&

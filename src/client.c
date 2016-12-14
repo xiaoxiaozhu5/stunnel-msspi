@@ -371,18 +371,6 @@ NOEXPORT void remote_start(CLI *c) {
         (long)c->remote_fd.fd);
 }
 
-#ifdef MSSPISSL
-static int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
-{
-    return BIO_read( c->rbio, buf, len );
-}
-
-static int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
-{
-    return BIO_write( c->wbio, buf, len );
-}
-#endif
-
 NOEXPORT void ssl_start(CLI *c) {
     int i, err;
     int unsafe_openssl;
@@ -429,16 +417,20 @@ NOEXPORT void ssl_start(CLI *c) {
         c->rbio = SSL_get_rbio( c->ssl );
         c->wbio = SSL_get_wbio( c->ssl );
         c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
-        if( !c->msh ) {
-            sslerror( "msspi_open" );
+        if( !c->msh )
+        {
+            s_log( LOG_ERR, "msspi: open failed" );
             longjmp( c->err, 1 );
         }
         if( c->opt->sni )
             msspi_set_hostname( c->msh, c->opt->sni );
-        if( c->opt->option.require_cert )
+        if( c->opt->option.request_cert )
             msspi_set_peerauth( c->msh, 1 );
-        if( c->opt->cert )
-            msspi_set_mycert( c->msh, c->opt->cert, 0 );
+        if( c->opt->cert && !msspi_set_mycert( c->msh, c->opt->cert, 0 ) )
+        {
+            s_log( LOG_ERR, "msspi: set_mycert failed (cert = \"%s\")", c->opt->cert );
+            longjmp( c->err, 1 );
+        }
     }
 #endif
 
@@ -512,23 +504,69 @@ NOEXPORT void ssl_start(CLI *c) {
     {
         s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
 
-        if( c->opt->option.verify_chain || c->opt->option.verify_peer )
+        if( c->opt->option.require_cert )
+        {
+            int count = 0;
+            if( !msspi_get_peercerts( c->msh, 0, 0, &count ) || count == 0 )
+            {
+                s_log( LOG_ERR, "msspi: no peer cert (require_cert = 1)" );
+                longjmp( c->err, 1 );
+            }
+        }
+
+        if( c->opt->option.verify_chain )
         {
             int level = LOG_ERR;
-            const char * errinfo = "MSSPI_VERIFY_ERROR";
+            const char * errinfo = "failed (MSSPI_VERIFY_ERROR)";
             switch( msspi_verify( c->msh ) )
             {
             case MSSPI_VERIFY_OK:
                 level = LOG_INFO;
-                errinfo = "MSSPI_VERIFY_OK";
+                errinfo = "OK";
                 break;
+            case CERT_E_CN_NO_MATCH:
+            {
+                if( c->opt->sni && c->opt->check_host )
+                {
+                    NAME_LIST * ptr;
+                    for( ptr = c->opt->check_host; ptr; ptr = ptr->next )
+                    {
+                        msspi_set_hostname( c->msh, ptr->name );
+                        if( msspi_verify( c->msh ) == MSSPI_VERIFY_OK )
+                            break;
+                    }
+
+                    msspi_set_hostname( c->msh, c->opt->sni );
+
+                    if( ptr )
+                    {
+                        level = LOG_INFO;
+                        errinfo = "OK";
+                        break;
+                    }
+                }
+                
+                errinfo = "failed (CERT_E_CN_NO_MATCH)";
+                break;
+            }
             default:
                 break;
             }
 
-            s_log( level, "msspi: verify = %s", errinfo );
+            s_log( level, "msspi: verify %s", errinfo );
             if( level == LOG_ERR )
                 longjmp( c->err, 1 );
+        }
+
+        if( c->opt->option.verify_peer )
+        {
+            if( !msspi_verifypeer( c->msh, c->opt->ca_dir ) )
+            {
+                s_log( LOG_ERR, "msspi: verifypeer failed (CApath = \"%s\")", c->opt->ca_dir );
+                longjmp( c->err, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: verifypeer OK" );
         }
 
         if( c->opt->log_level < LOG_INFO )
@@ -543,9 +581,9 @@ NOEXPORT void ssl_start(CLI *c) {
                 longjmp( c->err, 1 );
             }
 
-            s_log( LOG_INFO, "msspi: TLS protocol = %s", msspi_get_version( c->msh ) );
-            s_log( LOG_INFO, "msspi: cipher suite = %ws", cipherinfo->szCipherSuite );
-            s_log( LOG_INFO, "msspi: cipher = %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+            s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
+            s_log( LOG_INFO, "msspi: %ws", cipherinfo->szCipherSuite );
+            s_log( LOG_INFO, "msspi: %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
         }
 
         return;

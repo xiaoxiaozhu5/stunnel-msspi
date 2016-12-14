@@ -851,7 +851,7 @@ static void SSL_set_shutdown_prx( SSL * s, int mode ) { SSL_set_shutdown( s, mod
 
 static int SSL_get_shutdown_prx( const SSL * s ) { return SSL_get_shutdown( s ); }
 #undef SSL_get_shutdown
-#define SSL_get_shutdown( s ) ( c->msh ? ( msspi_state( c->msh ) == MSSPI_SHUTDOWN ? ( SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN ) : 0 ) : SSL_get_shutdown_prx( s ) )
+#define SSL_get_shutdown( s ) ( c->msh ? ( ( msspi_state( c->msh ) == MSSPI_SHUTDOWN || msspi_state( c->msh ) == MSSPI_ERROR ) ? ( SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN ) : 0 ) : SSL_get_shutdown_prx( s ) )
 
 static const char * SSL_get_version_prx( const SSL * s ) { return SSL_get_version( s ); }
 #undef SSL_get_version
@@ -884,6 +884,16 @@ static int SSL_get_error_msspi( MSSPI_HANDLE h )
 }
 #undef SSL_get_error
 #define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh ) : SSL_get_error_prx( s, i ) )
+
+static int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
+{
+    return BIO_read( c->rbio, buf, len );
+}
+
+static int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
+{
+    return BIO_write( c->wbio, buf, len );
+}
 
 #endif // MSSPISSL
 
