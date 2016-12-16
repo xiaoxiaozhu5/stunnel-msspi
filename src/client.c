@@ -502,7 +502,21 @@ NOEXPORT void ssl_start(CLI *c) {
 #ifdef MSSPISSL
     if( c->msh )
     {
-        s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
+        if( c->opt->log_level >= LOG_INFO )
+        {
+            PSecPkgContext_CipherInfo cipherinfo = msspi_get_cipherinfo( c->msh );
+
+            if( !cipherinfo )
+            {
+                s_log( LOG_ERR, "msspi: get_cipherinfo failed" );
+                longjmp( c->err, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
+            s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
+            s_log( LOG_INFO, "msspi: %ws", cipherinfo->szCipherSuite );
+            s_log( LOG_INFO, "msspi: %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+        }
 
         if( c->opt->option.require_cert )
         {
@@ -567,23 +581,6 @@ NOEXPORT void ssl_start(CLI *c) {
             }
 
             s_log( LOG_INFO, "msspi: verifypeer OK" );
-        }
-
-        if( c->opt->log_level < LOG_INFO )
-            return;
-
-        {
-            PSecPkgContext_CipherInfo cipherinfo = msspi_get_cipherinfo( c->msh );
-
-            if( !cipherinfo )
-            {
-                s_log( LOG_ERR, "msspi: get_cipherinfo failed" );
-                longjmp( c->err, 1 );
-            }
-
-            s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
-            s_log( LOG_INFO, "msspi: %ws", cipherinfo->szCipherSuite );
-            s_log( LOG_INFO, "msspi: %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
         }
 
         return;

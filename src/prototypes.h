@@ -887,12 +887,28 @@ static int SSL_get_error_msspi( MSSPI_HANDLE h )
 
 static int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
 {
-    return BIO_read( c->rbio, buf, len );
+    int io = BIO_read( c->rbio, buf, len );
+
+    if( io == len )
+        return io;
+
+    if( io < 0 && !BIO_should_retry( c->rbio ) )
+        io = 0;
+
+    return io;
 }
 
 static int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
 {
-    return BIO_write( c->wbio, buf, len );
+    int io = BIO_write( c->wbio, buf, len );
+
+    if( io == len )
+        return io;
+
+    if( io < 0 && !BIO_should_retry( c->wbio ) )
+        io = 0;
+
+    return io;
 }
 
 #endif // MSSPISSL
