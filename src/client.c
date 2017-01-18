@@ -408,6 +408,30 @@ NOEXPORT void ssl_start(CLI *c) {
         SSL_set_accept_state(c->ssl);
     }
 
+#ifdef MSSPISSL
+    c->msh = NULL;
+    if( c->opt->option.msspi )
+    {
+        c->rbio = SSL_get_rbio( c->ssl );
+        c->wbio = SSL_get_wbio( c->ssl );
+        c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
+        if( !c->msh )
+        {
+            s_log( LOG_ERR, "msspi: open failed" );
+            longjmp( c->err, 1 );
+        }
+        if( c->opt->sni )
+            msspi_set_hostname( c->msh, c->opt->sni );
+        if( c->opt->option.request_cert )
+            msspi_set_peerauth( c->msh, 1 );
+        if( c->opt->cert && !msspi_set_mycert( c->msh, c->opt->cert, 0 ) )
+        {
+            s_log( LOG_ERR, "msspi: set_mycert failed (cert = \"%s\")", c->opt->cert );
+            longjmp( c->err, 1 );
+        }
+    }
+#endif
+
     if(c->opt->option.require_cert)
         s_log(LOG_INFO, "Peer certificate required");
     else
@@ -473,6 +497,93 @@ NOEXPORT void ssl_start(CLI *c) {
             sslerror("SSL_accept");
         longjmp(c->err, 1);
     }
+#ifdef MSSPISSL
+    if( c->msh )
+    {
+        if( c->opt->log_level >= LOG_INFO )
+        {
+            PSecPkgContext_CipherInfo cipherinfo = msspi_get_cipherinfo( c->msh );
+
+            if( !cipherinfo )
+            {
+                s_log( LOG_ERR, "msspi: get_cipherinfo failed" );
+                longjmp( c->err, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
+            s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
+            s_log( LOG_INFO, "msspi: %ws", cipherinfo->szCipherSuite );
+            s_log( LOG_INFO, "msspi: %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+        }
+
+        if( c->opt->option.require_cert )
+        {
+            int count = 0;
+            if( !msspi_get_peercerts( c->msh, 0, 0, &count ) || count == 0 )
+            {
+                s_log( LOG_ERR, "msspi: no peer cert (require_cert = 1)" );
+                longjmp( c->err, 1 );
+            }
+        }
+
+        if( c->opt->option.verify_chain )
+        {
+            int level = LOG_ERR;
+            const char * errinfo = "failed (MSSPI_VERIFY_ERROR)";
+            switch( msspi_verify( c->msh ) )
+            {
+            case MSSPI_VERIFY_OK:
+                level = LOG_INFO;
+                errinfo = "OK";
+                break;
+            case CERT_E_CN_NO_MATCH:
+            {
+                if( c->opt->sni && c->opt->check_host )
+                {
+                    NAME_LIST * ptr;
+                    for( ptr = c->opt->check_host; ptr; ptr = ptr->next )
+                    {
+                        msspi_set_hostname( c->msh, ptr->name );
+                        if( msspi_verify( c->msh ) == MSSPI_VERIFY_OK )
+                            break;
+                    }
+
+                    msspi_set_hostname( c->msh, c->opt->sni );
+
+                    if( ptr )
+                    {
+                        level = LOG_INFO;
+                        errinfo = "OK";
+                        break;
+                    }
+                }
+                
+                errinfo = "failed (CERT_E_CN_NO_MATCH)";
+                break;
+            }
+            default:
+                break;
+            }
+
+            s_log( level, "msspi: verify %s", errinfo );
+            if( level == LOG_ERR )
+                longjmp( c->err, 1 );
+        }
+
+        if( c->opt->option.verify_peer )
+        {
+            if( !msspi_verifypeer( c->msh, c->opt->ca_dir ) )
+            {
+                s_log( LOG_ERR, "msspi: verifypeer failed (CApath = \"%s\")", c->opt->ca_dir );
+                longjmp( c->err, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: verifypeer OK" );
+        }
+
+        return;
+    }
+#endif
     s_log(LOG_INFO, "TLS %s: %s",
         c->opt->option.client ? "connected" : "accepted",
         SSL_session_reused(c->ssl) ?
@@ -1369,6 +1480,10 @@ NOEXPORT SOCKET connect_remote(CLI *c) {
         if(!connect_init(c, c->connect_addr.addr[c->idx].sa.sa_family) &&
                 !s_connect(c, &c->connect_addr.addr[c->idx],
                     addr_len(&c->connect_addr.addr[c->idx]))) {
+#ifdef MSSPISSL
+            if( c->msh );
+            else
+#endif
             if(c->ssl)
                 idx_cache_save(SSL_get_session(c->ssl),
                     &c->connect_addr.addr[c->idx]);
