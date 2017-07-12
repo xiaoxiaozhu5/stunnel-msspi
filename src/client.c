@@ -36,7 +36,67 @@
  */
 
 #include "common.h"
+
+#ifdef MSSPISSL 
+int SSL_connect_prx( SSL * s ) { return SSL_connect( s ); }
+int SSL_accept_prx( SSL * s ) { return SSL_accept( s ); }
+int SSL_write_prx( SSL * s, const void * buf, int num ) { return SSL_write( s, buf, num ); }
+int SSL_read_prx( SSL * s, void * buf, int num ) { return SSL_read( s, buf, num ); }
+void SSL_free_prx( SSL * s ) { SSL_free( s ); }
+int SSL_shutdown_prx( SSL * s ) { return SSL_shutdown( s ); }
+void SSL_set_shutdown_prx( SSL * s, int mode ) { SSL_set_shutdown( s, mode ); }
+int SSL_get_shutdown_prx( const SSL * s ) { return SSL_get_shutdown( s ); }
+const char * SSL_get_version_prx( const SSL * s ) { return SSL_get_version( s ); }
+int SSL_version_prx( const SSL * s ) { return SSL_version( s ); }
+int SSL_pending_prx( const SSL * s ) { return SSL_pending( s ); }
+int SSL_get_error_prx( const SSL *s, int ret_code ) { return SSL_get_error( s, ret_code ); }
+int SSL_get_error_msspi( MSSPI_HANDLE h )
+{
+    switch( msspi_state( h ) )
+    {
+        case MSSPI_NOTHING:
+            return SSL_ERROR_NONE;
+        case MSSPI_READING:
+            return SSL_ERROR_WANT_READ;
+        case MSSPI_WRITING:
+            return SSL_ERROR_WANT_WRITE;
+        case MSSPI_SHUTDOWN:
+            return SSL_ERROR_ZERO_RETURN;
+        default:
+            return SSL_ERROR_SYSCALL;
+    }
+}
+#endif // MSSPISSL
+
 #include "prototypes.h"
+
+#ifdef MSSPISSL
+int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
+{
+    int io = BIO_read( c->rbio, buf, len );
+
+    if( io == len )
+        return io;
+
+    if( io < 0 && !BIO_should_retry( c->rbio ) )
+        io = 0;
+
+    return io;
+}
+
+int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
+{
+    int io = BIO_write( c->wbio, buf, len );
+
+    if( io == len )
+        return io;
+
+    if( io < 0 && !BIO_should_retry( c->wbio ) )
+        io = 0;
+
+    return io;
+}
+#endif // MSSPISSL
 
 #ifndef SHUT_RD
 #define SHUT_RD 0
@@ -514,8 +574,8 @@ NOEXPORT void ssl_start(CLI *c) {
 
             s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
             s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
-            s_log( LOG_INFO, "msspi: %ws", cipherinfo->szCipherSuite );
-            s_log( LOG_INFO, "msspi: %ws (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+            s_log( LOG_INFO, "msspi: %ls", cipherinfo->szCipherSuite );
+            s_log( LOG_INFO, "msspi: %ls (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
         }
 
         if( c->opt->option.require_cert )

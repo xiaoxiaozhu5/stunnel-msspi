@@ -40,10 +40,6 @@
 
 #include "common.h"
 
-#ifdef MSSPISSL
-#include "msspi/src/msspi.h"
-#endif
-
 /**************************************** forward declarations */
 
 typedef struct tls_data_struct TLS_DATA;
@@ -818,96 +814,54 @@ ICON_IMAGE load_icon_file(const char *);
 #endif
 
 #ifdef MSSPISSL
-static int SSL_connect_prx( SSL * s ) { return SSL_connect( s ); }
+int SSL_connect_prx( SSL * s );
 #undef SSL_connect
 #define SSL_connect( s ) ( c->msh ? msspi_connect( c->msh ) : SSL_connect_prx( s ) )
 
-static int SSL_accept_prx( SSL * s ) { return SSL_accept( s ); }
+int SSL_accept_prx( SSL * s );
 #undef SSL_accept
 #define SSL_accept( s ) ( c->msh ? msspi_accept( c->msh ) : SSL_accept_prx( s ) )
 
-static int SSL_write_prx( SSL * s, const void * buf, int num ) { return SSL_write( s, buf, num ); }
+int SSL_write_prx( SSL * s, const void * buf, int num );
 #undef SSL_write
 #define SSL_write( s, b, n ) ( c->msh ? msspi_write( c->msh, b, n ) : SSL_write_prx( s, b, n ) )
 
-static int SSL_read_prx( SSL * s, void * buf, int num ) { return SSL_read( s, buf, num ); }
+int SSL_read_prx( SSL * s, void * buf, int num );
 #undef SSL_read
 #define SSL_read( s, b, n ) ( c->msh ? msspi_read( c->msh, b, n ) : SSL_read_prx( s, b, n ) )
 
-static void SSL_free_prx( SSL * s ) { SSL_free( s ); }
+void SSL_free_prx( SSL * s );
 #undef SSL_free
 #define SSL_free( s ) { SSL_free_prx( s ); if( c->msh ){ msspi_close( c->msh ); c->msh = NULL; } }
 
-static int SSL_shutdown_prx( SSL * s ) { return SSL_shutdown( s ); }
+int SSL_shutdown_prx( SSL * s );
 #undef SSL_shutdown
 #define SSL_shutdown( s ) ( c->msh ? msspi_shutdown( c->msh ) : SSL_shutdown_prx( s ) )
 
-static void SSL_set_shutdown_prx( SSL * s, int mode ) { SSL_set_shutdown( s, mode ); }
+void SSL_set_shutdown_prx( SSL * s, int mode );
 #undef SSL_set_shutdown
 #define SSL_set_shutdown( s, m ) { if( c->msh ) msspi_shutdown( c->msh ); else SSL_set_shutdown_prx( s, m ); }
 
-static int SSL_get_shutdown_prx( const SSL * s ) { return SSL_get_shutdown( s ); }
+int SSL_get_shutdown_prx( const SSL * s );
 #undef SSL_get_shutdown
 #define SSL_get_shutdown( s ) ( c->msh ? ( ( msspi_state( c->msh ) == MSSPI_SHUTDOWN || msspi_state( c->msh ) == MSSPI_ERROR ) ? ( SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN ) : 0 ) : SSL_get_shutdown_prx( s ) )
 
-static const char * SSL_get_version_prx( const SSL * s ) { return SSL_get_version( s ); }
+const char * SSL_get_version_prx( const SSL * s );
 #undef SSL_get_version
 #define SSL_get_version( s ) ( c->msh ? msspi_get_version( c->msh ) : SSL_get_version_prx( s ) )
 
-static int SSL_version_prx( const SSL * s ) { return SSL_version( s ); }
+int SSL_version_prx( const SSL * s );
 #undef SSL_version
 #define SSL_version( s ) ( c->msh ? TLS1_VERSION : SSL_version_prx( s ) )
 
-static int SSL_pending_prx( const SSL * s ) { return SSL_pending( s ); }
+int SSL_pending_prx( const SSL * s );
 #undef SSL_pending
 #define SSL_pending( s ) ( c->msh ? msspi_pending( c->msh ) : SSL_pending_prx( s ) )
 
-static int SSL_get_error_prx( const SSL *s, int ret_code ) { return SSL_get_error( s, ret_code ); }
-static int SSL_get_error_msspi( MSSPI_HANDLE h )
-{
-    switch( msspi_state( h ) )
-    {
-    case MSSPI_NOTHING:
-        return SSL_ERROR_NONE;
-    case MSSPI_READING:
-        return SSL_ERROR_WANT_READ;
-    case MSSPI_WRITING:
-        return SSL_ERROR_WANT_WRITE;
-    case MSSPI_SHUTDOWN:
-        return SSL_ERROR_ZERO_RETURN;
-    default:
-        return SSL_ERROR_SYSCALL;
-    }
-}
+int SSL_get_error_prx( const SSL *s, int ret_code );
+int SSL_get_error_msspi( MSSPI_HANDLE h );
 #undef SSL_get_error
 #define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh ) : SSL_get_error_prx( s, i ) )
-
-static int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
-{
-    int io = BIO_read( c->rbio, buf, len );
-
-    if( io == len )
-        return io;
-
-    if( io < 0 && !BIO_should_retry( c->rbio ) )
-        io = 0;
-
-    return io;
-}
-
-static int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
-{
-    int io = BIO_write( c->wbio, buf, len );
-
-    if( io == len )
-        return io;
-
-    if( io < 0 && !BIO_should_retry( c->wbio ) )
-        io = 0;
-
-    return io;
-}
-
 #endif // MSSPISSL
 
 #endif /* defined PROTOTYPES_H */
