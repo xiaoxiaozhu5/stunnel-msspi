@@ -580,7 +580,7 @@ NOEXPORT void ssl_start(CLI *c) {
 
         if( c->opt->option.require_cert )
         {
-            int count = 0;
+            size_t count = 0;
             if( !msspi_get_peercerts( c->msh, 0, 0, &count ) || count == 0 )
             {
                 s_log( LOG_ERR, "msspi: no peer cert (require_cert = 1)" );
