@@ -66,7 +66,7 @@ int SSL_get_error_msspi( MSSPI_HANDLE h )
             return SSL_ERROR_SYSCALL;
     }
 }
-#endif // MSSPISSL
+#endif /* MSSPISSL */
 
 #include "prototypes.h"
 
@@ -96,7 +96,7 @@ int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
 
     return io;
 }
-#endif // MSSPISSL
+#endif /* MSSPISSL */
 
 #ifndef SHUT_RD
 #define SHUT_RD 0
@@ -600,6 +600,7 @@ NOEXPORT void ssl_start(CLI *c) {
                 break;
             case CERT_E_CN_NO_MATCH:
             {
+#if OPENSSL_VERSION_NUMBER>=0x10002000L
                 if( c->opt->sni && c->opt->check_host )
                 {
                     NAME_LIST * ptr;
@@ -619,6 +620,7 @@ NOEXPORT void ssl_start(CLI *c) {
                         break;
                     }
                 }
+#endif /* OPENSSL_VERSION_NUMBER>=0x10002000L */
                 
                 errinfo = "failed (CERT_E_CN_NO_MATCH)";
                 break;
