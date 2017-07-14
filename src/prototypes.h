@@ -862,7 +862,7 @@ int SSL_get_error_prx( const SSL *s, int ret_code );
 int SSL_get_error_msspi( MSSPI_HANDLE h );
 #undef SSL_get_error
 #define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh ) : SSL_get_error_prx( s, i ) )
-#endif // MSSPISSL
+#endif /* MSSPISSL */
 
 #endif /* defined PROTOTYPES_H */
 
