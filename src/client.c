@@ -572,10 +572,9 @@ NOEXPORT void ssl_start(CLI *c) {
                 longjmp( c->err, 1 );
             }
 
-            s_log( LOG_INFO, "msspi: %s", c->opt->option.client ? "connected" : "accepted" );
-            s_log( LOG_INFO, "msspi: %s", msspi_get_version( c->msh ) );
-            s_log( LOG_INFO, "msspi: %ls", cipherinfo->szCipherSuite );
-            s_log( LOG_INFO, "msspi: %ls (%d-bit)", cipherinfo->szCipher, cipherinfo->dwCipherLen );
+            s_log( LOG_INFO, "msspi: %s %s (%04X)", msspi_get_version( c->msh ),
+                   c->opt->option.client ? "connected" : "accepted",
+                   cipherinfo->dwCipherSuite );
         }
 
         if( c->opt->option.require_cert )
