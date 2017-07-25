@@ -1411,6 +1411,31 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         s_log( LOG_NOTICE, "%-22s = yes|no msspi mode", "msspi" );
         break;
     }
+
+    /* pin */
+    switch( cmd )
+    {
+        case CMD_BEGIN:
+            section->pin = NULL;
+            break;
+        case CMD_EXEC:
+            if( strcasecmp( opt, "pin" ) )
+                break;
+            if( arg[0] )
+                section->pin = str_dup( arg );
+            else
+                return "The pin is empty";
+            return NULL; /* OK */
+        case CMD_END:
+            break;
+        case CMD_FREE:
+            break;
+        case CMD_DEFAULT:
+            break;
+        case CMD_HELP:
+            s_log( LOG_NOTICE, "%-22s = pin", "pin" );
+            break;
+    }
 #endif
 
     /* client */

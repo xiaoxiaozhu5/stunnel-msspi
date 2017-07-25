@@ -214,6 +214,9 @@ typedef struct service_options_struct {
     char *cipher_list;
     char *cert;                                             /* cert filename */
     char *key;                               /* pem (priv key/cert) filename */
+#ifdef MSSPISSL
+    char *pin;                                     /* pin-code for msspi key */
+#endif
     long session_size, session_timeout;
     long unsigned ssl_options_set;
 #if OPENSSL_VERSION_NUMBER>=0x009080dfL
