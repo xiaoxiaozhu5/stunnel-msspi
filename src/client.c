@@ -37,7 +37,7 @@
 
 #include "common.h"
 
-#ifdef MSSPISSL 
+#ifdef MSSPISSL
 int SSL_connect_prx( SSL * s ) { return SSL_connect( s ); }
 int SSL_accept_prx( SSL * s ) { return SSL_accept( s ); }
 int SSL_write_prx( SSL * s, const void * buf, int num ) { return SSL_write( s, buf, num ); }
