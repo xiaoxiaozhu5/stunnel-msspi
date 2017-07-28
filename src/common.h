@@ -520,7 +520,9 @@ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 #define offsetof(T, F) ((unsigned)((char *)&((T *)0L)->F - (char *)0L))
 #endif
 
-#ifdef MSSPISSL
+
+#ifdef USE_MSSPI
+#define MSSPISSL
 #include "msspi/src/msspi.h"
 #endif
 
