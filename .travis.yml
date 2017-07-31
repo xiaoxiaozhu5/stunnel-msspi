@@ -28,9 +28,10 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - g++-4.9
+    - autoconf-archive
     - libssl-dev
     - libwrap0-dev
+    - g++-4.9
 install:
 - if [ $MSSPI == yes ]; then wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-amd64_deb.tgz && tar -xvf linux-amd64_deb.tgz && sudo linux-amd64_deb/install.sh; fi
 
