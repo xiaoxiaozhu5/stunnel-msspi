@@ -17,11 +17,11 @@ env:
   global:
   - secure: twdfThD5M6bIeGTGiS7vsUUtYpUOHobh13n/s0Q1aiSbAgZ9WMrXZ+b0UJzuB12NrqT64IlfR8qdv023Arf+bMtVuiK1GfF8AGk2ntIFE7deF/D4Ba8JzKIAL/rRB3ensEJXlXIdxoGVMr5j1oEljl5qsAJLay0cQZfAZBN+1hxZ2ONGbuejPRTjLUxPtdl3oIt1VR4qZG/GOONc3lXPgrvNQvwuVfpHZmp+raTyuQgm4l00mgEbYNm9zbSbRYYAA1sQQBSt0QisUa4SJ5e47/GBVMnAOOwo3huAxex1zQ+8FJVrWOc/1E7X8cL5EYxNM5CqSa3Yc3q3lOWtSuVUvDZ0K9G2VpkB5oWGYDnqZLxbOA70+6wjRVIFMJ56dG9pEL9ofyPtDDQOO34hXso1WIa1oh41520xDCprB/g0BMwJrZQJ3mui5j7Kub5HPujq/lsas7CUEQoaOILaFGerLXnh3J+3JwYN83cPA6av4RSouFfH6X0GBnv6ZGCWFYBOqXBWNrKGIFFzJ/AOxbjB82jbeOD2tsB3vY4md9lcSBXpoS7uhbKrBw4JWMSm9sR2sDudsM2fZXh155Uv8GHcsChPoibkw/71ZSm/y9z6qGAwmaYz3bCX74cN9YhSGIG1UqMS4BbWnjALaQajqSSAtIF8qnwnuTEFgVmsq2+skBQ=
   matrix:
-  - CONFIGURE_OPTIONS='--enable-msspi' MSSPI='yes'
-  - CONFIGURE_OPTIONS='--with-threads=pthread' MSSPI='no'
-  - CONFIGURE_OPTIONS='--with-threads=fork' MSSPI='no'
-  - CONFIGURE_OPTIONS='--with-threads=ucontext' MSSPI='no'
-  - CONFIGURE_OPTIONS='--disable-ipv6 --disable-fips --disable-systemd --disable-libwrap' MSSPI='no'
+  - CONFIGURE_OPTIONS='--enable-msspi'
+  - CONFIGURE_OPTIONS='--with-threads=pthread'
+  - CONFIGURE_OPTIONS='--with-threads=fork'
+  - CONFIGURE_OPTIONS='--with-threads=ucontext'
+  - CONFIGURE_OPTIONS='--disable-ipv6 --disable-fips --disable-systemd --disable-libwrap'
 
 addons:
   apt:
@@ -33,15 +33,15 @@ addons:
     - libssl-dev
     - libwrap0-dev
 install:
-- if [ $MSSPI == yes ]; then wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-amd64_deb.tgz && tar -xvf linux-amd64_deb.tgz && sudo linux-amd64_deb/install.sh; fi
+- if [ $CONFIGURE_OPTIONS == '--enable-msspi' ]; then wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-amd64_deb.tgz && tar -xvf linux-amd64_deb.tgz && sudo linux-amd64_deb/install.sh; fi
 
 before_script:
 - autoreconf -fvi && touch src/dhparam.c
-- if [ $MSSPI == yes ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
+- if [ $CONFIGURE_OPTIONS == '--enable-msspi' ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
 
 script:
 - ./configure $CONFIGURE_OPTIONS && make && make test
-- if [ $MSSPI == yes ]; then cd tests && sudo perl make_default_certs.pl && sudo perl stunnel.pl local && sudo killall stunnel && cd ../src && tar -cvzf stunnel.tar.gz stunnel && cd ..; fi
+- if [ $CONFIGURE_OPTIONS == '--enable-msspi' ]; then cd tests && sudo perl make_default_certs.pl && sudo perl stunnel.pl local && sudo killall stunnel && cd ../src && tar -cvzf stunnel.tar.gz stunnel && cd ..; fi
 
 after_success:
 deploy:
@@ -52,4 +52,4 @@ deploy:
   file: src/stunnel.tar.gz
   on:
     tags: true
-    condition: $MSSPI = yes
+    condition: $CONFIGURE_OPTIONS = '--enable-msspi'
