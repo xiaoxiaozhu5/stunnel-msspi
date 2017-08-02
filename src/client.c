@@ -532,7 +532,7 @@ NOEXPORT void ssl_start(CLI *c) {
             fclose(cert_file);
             free(str_file);
         }
-        if( c->opt->cert && !msspi_set_mycert_options( c->msh, c->opt->pin ? 1 : 0, c->opt->pin, 1 ) )
+        if( c->opt->cert && !msspi_set_mycert_options( c->msh, 1, c->opt->pin, 1 ) )
         {
             s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", c->opt->cert, c->opt->pin ? c->opt->pin : "" );
             longjmp( c->err, 1 );
