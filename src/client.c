@@ -75,26 +75,26 @@ int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
 {
     int io = BIO_read( c->rbio, buf, len );
 
-    if( io == len )
+    if( io > 0 )
         return io;
 
-    if( io < 0 && !BIO_should_retry( c->rbio ) )
-        io = 0;
+    if( BIO_should_retry( c->rbio ) )
+        return -1;
 
-    return io;
+    return 0;
 }
 
 int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
 {
     int io = BIO_write( c->wbio, buf, len );
 
-    if( io == len )
+    if( io > 0 )
         return io;
 
-    if( io <= 0 && !BIO_should_retry( c->wbio ) )
-        io = 0;
+    if( BIO_should_retry( c->wbio ) )
+        return -1;
 
-    return io;
+    return 0;
 }
 #endif /* MSSPISSL */
 
