@@ -41,7 +41,7 @@ before_script:
 
 script:
 - ./configure $CONFIGURE_OPTIONS && make && make test
-- if [ $MSSPI == 'yes' ]; then cd tests && sudo perl make_default_certs.pl && sudo perl stunnel.pl local && sudo killall stunnel && cd ../src && tar -cvzf stunnel.tar.gz stunnel && cd ..; fi
+- if [ $MSSPI == 'yes' ]; then cd tests && sudo perl test-stunnel.pl && cd ../src && tar -cvzf stunnel.tar.gz stunnel && cd ..; fi
 
 after_success:
 deploy:

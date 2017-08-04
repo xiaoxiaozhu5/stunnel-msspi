@@ -491,7 +491,7 @@ NOEXPORT void ssl_start(CLI *c) {
         {
             const long int MAX_SIZE = 1024 * 1024;
             char is_ok = 0;
-            const char *err = "Unkown";
+            const char *err = "unknown";
             long int size_file = 0;
             FILE *cert_file = NULL;
             char *str_file = NULL;
