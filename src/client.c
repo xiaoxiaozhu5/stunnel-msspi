@@ -223,6 +223,7 @@ NOEXPORT void client_run(CLI *c) {
     c->fd=INVALID_SOCKET;
     c->ssl=NULL;
     c->sock_bytes=c->ssl_bytes=0;
+    c->sock_rbytes = c->ssl_rbytes = 0;
     if(c->opt->option.client) {
         c->sock_rfd=&(c->local_rfd);
         c->sock_wfd=&(c->local_wfd);
@@ -240,6 +241,14 @@ NOEXPORT void client_run(CLI *c) {
     if(!err)
         client_try(c);
     rst=err==1 && c->opt->option.reset;
+    if( c->ssl_rbytes != c->sock_bytes ||
+        c->sock_rbytes != c->ssl_bytes )
+        s_log( LOG_NOTICE,
+               "Connection %s: TLS > socket = %llu > %llu; socket > TLS = %llu > %llu",
+               rst ? "reset" : "closed",
+               ( unsigned long long )c->ssl_rbytes, ( unsigned long long )c->sock_bytes,
+               ( unsigned long long )c->sock_rbytes, ( unsigned long long )c->ssl_bytes );
+    else
     s_log(LOG_NOTICE,
         "Connection %s: %llu byte(s) sent to TLS, %llu byte(s) sent to socket",
         rst ? "reset" : "closed",
@@ -1041,6 +1050,7 @@ NOEXPORT void transfer(CLI *c) {
                 break; /* do not reset the watchdog */
             default:
                 c->sock_ptr+=(size_t)num;
+                c->sock_rbytes += (size_t)num;
                 watchdog=0; /* reset the watchdog */
             }
         }
@@ -1126,6 +1136,7 @@ NOEXPORT void transfer(CLI *c) {
                     break; /* do not reset the watchdog */
                 }
                 c->ssl_ptr+=(size_t)num;
+                c->ssl_rbytes += (size_t)num;
                 watchdog=0; /* reset the watchdog */
                 break;
             case SSL_ERROR_WANT_WRITE:
