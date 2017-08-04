@@ -39,3 +39,15 @@ print "----------------------------------\n\n";
 
 print "cat client_log:\n\n";
 system("cat client_log");
+
+print "\n\n--------CLIENT STUNNEL LOG--------\n";
+print "----------------------------------\n\n";
+
+print "cat /var/opt/cprocsp/tmp/stunnel_cli.log:\n\n";
+system("cat /var/opt/cprocsp/tmp/stunnel_cli.log");
+
+print "\n\n--------SERVER STUNNEL LOG--------\n";
+print "----------------------------------\n\n";
+
+print "cat /var/opt/cprocsp/tmp/stunnel_serv.log:\n\n";
+system("cat /var/opt/cprocsp/tmp/stunnel_serv.log");
