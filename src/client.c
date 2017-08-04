@@ -500,7 +500,7 @@ NOEXPORT void ssl_start(CLI *c) {
         {
             const long int MAX_SIZE = 1024 * 1024;
             char is_ok = 0;
-            const char *err = "unknown";
+            const char *errstr = "unknown";
             long int size_file = 0;
             FILE *cert_file = NULL;
             char *str_file = NULL;
@@ -512,51 +512,51 @@ NOEXPORT void ssl_start(CLI *c) {
 
             for(;;) {
                 if ((cert_file = fopen(c->opt->cert, "rb")) == NULL) {
-                    err = "can not open file";
+                    errstr = "can not open file";
                     break;
                 }
                 if (fseek(cert_file, 0, SEEK_END) == -1L) {
-                    err = "can not read file";
+                    errstr = "can not read file";
                     break;
                 }
                 if ((size_file = ftell(cert_file)) > MAX_SIZE) {
-                    err = "file too large";
+                    errstr = "file too large";
                     break;
                 }
                 if ((fseek(cert_file, 0, 0)) == -1L) {
-                    err = "can not read file";
+                    errstr = "can not read file";
                     break;
                 }
                 if ((str_file = (char *)malloc(sizeof(char) * (size_t)size_file)) == NULL) {
-                    err = "can not allocate memory for file";
+                    errstr = "can not allocate memory for file";
                     break;
                 }
                 if(fread(str_file, sizeof(char), (size_t)size_file, cert_file) != (unsigned long int)size_file) {
-                    err = "can not read file";
+                    errstr = "can not read file";
                     break;
                 }
                 
                 if ((bio = BIO_new(BIO_s_mem())) == NULL) {
-                    err = "BIO_new failed";
+                    errstr = "BIO_new failed";
                     break;
                 }
                 if (BIO_puts(bio, str_file) <= 0) {
-                    err = "BIO_puts failed";
+                    errstr = "BIO_puts failed";
                     break;
                 }
                 if ((certificate = PEM_read_bio_X509_AUX(bio, NULL, NULL, NULL)) != NULL) {
                     if ((size_file = i2d_X509(certificate, &buf)) < 0) {
-                        err = "i2d_X509 failed";
+                        errstr = "i2d_X509 failed";
                         break;
                     }
                     if (!msspi_set_mycert( c->msh, (char *)buf, (int)size_file)) {
-                        err = "bad file (PEM)";
+                        errstr = "bad file (PEM)";
                         break;
                     }
                 }
                 else {
                     if (!msspi_set_mycert( c->msh, (char *)str_file, (int)size_file)) {
-                        err = "bad file (DER)";
+                        errstr = "bad file (DER)";
                         break;
                     }
                 }
@@ -569,7 +569,7 @@ NOEXPORT void ssl_start(CLI *c) {
             if (certificate) X509_free(certificate);
             if (buf) OPENSSL_free(buf);
             if (!is_ok) {
-                s_log( LOG_ERR, "msspi: set_mycert failed: \"%s\" (cert = \"%s\")",err ,c->opt->cert );
+                s_log( LOG_ERR, "msspi: set_mycert failed: \"%s\" (cert = \"%s\")",errstr ,c->opt->cert );
                 longjmp( c->err, 1 );
             }
         }
