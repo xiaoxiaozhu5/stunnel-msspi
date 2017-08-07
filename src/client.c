@@ -78,7 +78,7 @@ int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
     if( io > 0 )
         return io;
 
-    if( BIO_should_retry( c->rbio ) )
+    if( BIO_should_read( c->rbio ) )
         return -1;
 
     return 0;
@@ -91,7 +91,7 @@ int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
     if( io > 0 )
         return io;
 
-    if( BIO_should_retry( c->wbio ) )
+    if( BIO_should_write( c->wbio ) )
         return -1;
 
     return 0;
