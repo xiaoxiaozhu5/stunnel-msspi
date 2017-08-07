@@ -859,8 +859,9 @@ void SSL_set_shutdown_prx( SSL * s, int mode );
 #define SSL_set_shutdown( s, m ) { if( c->msh ) msspi_shutdown( c->msh ); else SSL_set_shutdown_prx( s, m ); }
 
 int SSL_get_shutdown_prx( const SSL * s );
+int SSL_get_shutdown_msspi( MSSPI_HANDLE h );
 #undef SSL_get_shutdown
-#define SSL_get_shutdown( s ) ( c->msh ? ( ( msspi_state( c->msh ) == MSSPI_SHUTDOWN || msspi_state( c->msh ) == MSSPI_ERROR ) ? ( SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN ) : 0 ) : SSL_get_shutdown_prx( s ) )
+#define SSL_get_shutdown( s ) ( c->msh ? SSL_get_shutdown_msspi( c->msh ) : SSL_get_shutdown_prx( s ) )
 
 const char * SSL_get_version_prx( const SSL * s );
 #undef SSL_get_version

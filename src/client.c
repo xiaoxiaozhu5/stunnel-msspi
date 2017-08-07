@@ -52,19 +52,27 @@ int SSL_pending_prx( const SSL * s ) { return SSL_pending( s ); }
 int SSL_get_error_prx( const SSL *s, int ret_code ) { return SSL_get_error( s, ret_code ); }
 int SSL_get_error_msspi( MSSPI_HANDLE h )
 {
-    switch( msspi_state( h ) )
-    {
-        case MSSPI_NOTHING:
-            return SSL_ERROR_NONE;
-        case MSSPI_READING:
-            return SSL_ERROR_WANT_READ;
-        case MSSPI_WRITING:
-            return SSL_ERROR_WANT_WRITE;
-        case MSSPI_SHUTDOWN:
-            return SSL_ERROR_ZERO_RETURN;
-        default:
-            return SSL_ERROR_SYSCALL;
-    }
+    int err = msspi_state( h );  
+    if( err & MSSPI_ERROR )
+        return SSL_ERROR_SYSCALL;
+    if( err & MSSPI_SHUTDOWN  )
+        return SSL_ERROR_ZERO_RETURN;
+    if( err & MSSPI_WRITING )
+        return SSL_ERROR_WANT_WRITE;
+    if( err & MSSPI_READING )
+        return SSL_ERROR_WANT_READ;
+    return SSL_ERROR_NONE;
+}
+int SSL_get_shutdown_msspi( MSSPI_HANDLE h )
+{
+    int err = msspi_state( h );
+    if( err & MSSPI_ERROR || ( err & MSSPI_SHUTDOWN ) == MSSPI_SHUTDOWN )
+        return SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
+    if( err & MSSPI_SENT_SHUTDOWN )
+        return SSL_SENT_SHUTDOWN;
+    if( err & MSSPI_RECEIVED_SHUTDOWN )
+        return SSL_RECEIVED_SHUTDOWN;
+    return 0;
 }
 #endif /* MSSPISSL */
 
