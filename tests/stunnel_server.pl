@@ -1,9 +1,7 @@
-##############################################################################
-# Проверка работы CSP
-##############################################################################
 
 
 use strict;
+use Scripts;
 use IO::Select;
 use IO::Socket;
 use Net::hostent;              # for OO version of gethostbyaddr
@@ -11,18 +9,6 @@ use Net::hostent;              # for OO version of gethostbyaddr
 sub StartServer();
 sub GetTimeofDay();
 sub GetDiffTimeofDay($);
-
-sub RunCmd($$) {
-    print "\n+++++++++++++++++++++++++++++++++\n";
-    my $info = shift;
-    my $cmd = shift;
-    print $info.": \n";
-    print $cmd." \n\n";
-    my $res = system($cmd);
-    print $res." \n\n";
-    print "+++++++++++++++++++++++++++++++++ \n\n\n";
-    return $res;
-}
 
 my $DataPath = '/var/opt/cprocsp/tmp/';
 
@@ -87,7 +73,7 @@ my $Time_Hires_enable;
 			print "Successfull authentication:" . $msg_suffix . "\n";
 		}
 		else {
-			RunCmd("cat", 'cat ' . $srv_log);
+			RunCmd("Cat", 'cat ' . $srv_log);
 			print "Authentication marker not found:" . $msg_suffix . "\n";
 		}
 	}

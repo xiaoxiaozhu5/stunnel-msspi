@@ -416,6 +416,7 @@ typedef struct {
     FD *sock_rfd, *sock_wfd; /* read and write socket descriptors */
     FD *ssl_rfd, *ssl_wfd; /* read and write TLS descriptors */
     uint64_t sock_bytes, ssl_bytes; /* bytes written to socket and TLS */
+    uint64_t sock_rbytes, ssl_rbytes; /* bytes read from socket and TLS */
     s_poll_set *fds; /* file descriptors */
 } CLI;
 
