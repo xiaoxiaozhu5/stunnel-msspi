@@ -1420,7 +1420,8 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
             section->pin = NULL;
             break;
         case CMD_EXEC:
-            if( strcasecmp( opt, "pin" ) )
+            if( strcasecmp( opt, "pin" ) &&
+                strcasecmp( opt, "pincode" ) )
                 break;
             if( arg[0] )
                 section->pin = str_dup( arg );

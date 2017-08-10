@@ -536,11 +536,17 @@ NOEXPORT void ssl_start(CLI *c) {
                     errstr = "can not allocate memory for file";
                     break;
                 }
-                if(fread(str_file, sizeof(char), (size_t)size_file, cert_file) != (unsigned long int)size_file) {
+                if (fread(str_file, sizeof(char), (size_t)size_file, cert_file) != (unsigned long int)size_file) {
                     errstr = "can not read file";
                     break;
                 }
-                
+                /* try DER */
+                if( msspi_set_mycert( c->msh, (char *)str_file, (int)size_file ) )
+                {
+                    is_ok = 1;
+                    break;
+                }
+                /* try PEM */
                 if ((bio = BIO_new(BIO_s_mem())) == NULL) {
                     errstr = "BIO_new failed";
                     break;
@@ -554,20 +560,17 @@ NOEXPORT void ssl_start(CLI *c) {
                         errstr = "i2d_X509 failed";
                         break;
                     }
-                    if (!msspi_set_mycert( c->msh, (char *)buf, (int)size_file)) {
-                        errstr = "bad file (PEM)";
+                    if( msspi_set_mycert( c->msh, (char *)buf, (int)size_file ) )
+                    {
+                        is_ok = 1;
                         break;
                     }
                 }
-                else {
-                    if (!msspi_set_mycert( c->msh, (char *)str_file, (int)size_file)) {
-                        errstr = "bad file (DER)";
-                        break;
-                    }
-                }
-                is_ok = 1;
+
+                errstr = "bad file format";
                 break;
             }
+
             if (cert_file) fclose(cert_file);
             if (str_file) free(str_file);
             if (bio) BIO_free_all(bio);
@@ -1632,8 +1635,7 @@ NOEXPORT SOCKET connect_remote(CLI *c) {
                 !s_connect(c, &c->connect_addr.addr[c->idx],
                     addr_len(&c->connect_addr.addr[c->idx]))) {
 #ifdef MSSPISSL
-            if( c->msh );
-            else
+            if( !c->msh )
 #endif
             if(c->ssl)
                 idx_cache_save(SSL_get_session(c->ssl),
