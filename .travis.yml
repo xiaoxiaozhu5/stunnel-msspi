@@ -36,8 +36,9 @@ install:
 - if [ $MSSPI == 'yes' ]; then wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-amd64_deb.tgz && tar -xvf linux-amd64_deb.tgz && sudo linux-amd64_deb/install.sh; fi
 
 before_script:
-- autoreconf -fvi && touch src/dhparam.c
-- if [ $MSSPI == 'yes' ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install autoconf-archive; fi
+  - autoreconf -fvi && touch src/dhparam.c
+  - if [ $MSSPI == 'yes' ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
 
 script:
 - ./configure $CONFIGURE_OPTIONS && make && make test
