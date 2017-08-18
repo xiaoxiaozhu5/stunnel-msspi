@@ -42,7 +42,7 @@ before_script:
 
 script:
 - ./configure $CONFIGURE_OPTIONS && make && make test
-- if [ $MSSPI == 'yes' ]; then mv ./src/stunnel ./src/stunnel-msspi && cd tests && sudo perl test-stunnel-msspi.pl && cd ../src && tar -cvzf stunnel-msspi.tar.gz stunnel-msspi && cd ..; fi
+- if [ $MSSPI == 'yes' ]; then mv ./src/stunnel ./src/stunnel-msspi && cd tests && sudo perl test-stunnel-msspi.pl && cd ../src && tar -cvzf $TRAVIS_TAG_linux-amd64.tar.gz stunnel-msspi && cd ..; fi
 
 after_success:
 deploy:
@@ -50,7 +50,7 @@ deploy:
   api_key:
     secure: NdsZjaeC2SU8Eo9uL4gwxhCSIfYbDNxBxLi6jJsm/u55Ouqg4Iz0DOYx0l+C0yemBhSX8lnShhjRPKRbEMLRNDvBi/f55CCHOMhk0KlQt/fvkBAsPf/bHLle0KEszj33rfklF1uc1/R2PJn8iwkuVTslVmLCKOB+1E5KWRgWgQvjsEWl26KBH32RM6sqi9jXeKPgdNLxZYon//fhktEKhBsp8mtc6qigvUEhzwuHAREwdyCy6A46dNNfzxg3I01TpooOSCZsdkRg9vvOT0H7agF3Dj6RocozuzIj2NoIka5e4rKPW/EYqd0yLM77f+pgs10I30SNbQSqJcYSIfHfJNiup+q2rnGgQQHOowg7Gqj//ffVEwyhCM4F90QlTCcjNECmaRfhIjQk5ICeakNlWojSBDcA0yEmnTu7BKTsZJOnjLFH8r6DrJmSta2ZNMdacgEaG+al3CoW57GOp6Nukbo1PGBYfZ3L/2QvguklKQGL/rAoVbR+PujjLyqfNwpt8ije9N7SvqporVeAOmpMGrNDQ94Ss3cXMhaJUJxfdg5lMsBm2qUytn5jeO4BTtBgyiyK/LyWMJg3NkUx1egVJbkoOwHSRT0VH7y8uYzvxYtYtTikBdmgfd25wZ+dQTANWbiFtkQs/DZqCnJ2nFTDNfTKyhtmSJZJXM6/Xerxt3c=
   skip_cleanup: true
-  file: src/stunnel-msspi.tar.gz
+  file: src/$TRAVIS_TAG_linux-amd64.tar.gz
   on:
     tags: true
     condition: $MSSPI = yes
