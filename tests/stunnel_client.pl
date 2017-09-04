@@ -1,9 +1,6 @@
-##############################################################################
-# Проверка работы CSP
-##############################################################################
-
 
 use strict;
+use Scripts;
 use IO::Select;
 use IO::Socket;
 
@@ -11,7 +8,6 @@ sub ConnectToThisServer($$);
 sub ConnectToRemoteServer($$);
 sub GetTimeofDay();
 sub GetDiffTimeofDay($);
-sub RunCmd($$);
 
 my $DataPath = '/var/opt/cprocsp/tmp/';
 
@@ -47,7 +43,7 @@ my $cert_CN_value;
         my $ln = <IN>;
         close IN;
         if ($ln =~ /\d/) {
-            sleep(7);
+            sleep(1);
             RunCmd('kill', '/bin/kill -s KILL '.$ln); 
         } 
     }
@@ -108,6 +104,7 @@ sub ConnectToThisServer($$)
         my $nexttry = 1; 	    
         my $remote = IO::Socket::INET->new( Proto     => "tcp",
                                             PeerAddr  => $host,
+                                            Timeout   => 1,
                                             PeerPort  => $port,
                                            );
                                            
@@ -163,11 +160,13 @@ sub ConnectToThisServer($$)
             };
             if ($@) {
                 print "Error while sending data: " . $@ . "\n";
+                sleep(1);
                 close $remote;
                 last;
             }            
             if ($PIPE_ERR == 1) {
                 print "Broken pipe error. \n";
+                sleep(1);
                 close $remote;
                 last;                
             }
@@ -197,18 +196,6 @@ sub ConnectToThisServer($$)
     print "Timeout when connecting $host on port $port : " . $! . "\n" if ($i == $timeout_cycle);
 }
 
-
-sub RunCmd($$) {
-    print "\n+++++++++++++++++++++++++++++++++\n";
-    my $info = shift;
-    my $cmd = shift;
-    print $info.": \n";
-    print $cmd." \n\n";
-    my $res = system($cmd);
-    print $res." \n\n";
-    print "+++++++++++++++++++++++++++++++++ \n\n\n";
-    return $res;
-}
 
 #-----------------------------------------------------------------------------
 sub GetTimeofDay()

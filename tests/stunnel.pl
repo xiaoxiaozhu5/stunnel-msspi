@@ -1,6 +1,7 @@
 ##############################################################################
 
 use strict;
+use Scripts;
 
 sub KillStunnels();
 sub PrepareAndRunConf($$$$);
@@ -17,7 +18,7 @@ my $unix_socket_file = '/var/opt/cprocsp/tmp/.stunnelsrv';
 my $DataPath = '/var/opt/cprocsp/tmp/';
 
 my $servercert_file = $DataPath . 'stunnelsrv.cer';
-my $clientcert_file = $DataPath . 'stunnelcln.cer';
+my $clientcert_file = $DataPath . 'stunnelcln.pem';
 my $serverconf_file = $DataPath . 'stunnelsrv.conf';
 my $clientconf_file = $DataPath . 'stunnelcln.conf';
 
@@ -56,14 +57,14 @@ accept = '.$server_host_name.':'.$client_port;
 
 # сервер INET socket
 my $serverconf_INET = $serverconf_common.'
-cert = '.$srv_cert.'
+cert = '.$servercert_file.'
 ;socket = l:TCP_NODELAY=1
 accept = '.$server_host_name.':'.$tunnel_port.'
 verify = 2'; 
 
 # клиент INET socket
 my $clientconf_INET = $clientconf_common.'
-cert ='.$cln_cert.'
+cert ='.$clientcert_file.'
 ;socket = r:TCP_NODELAY=1
 connect = '.$server_host_name.':'.$tunnel_port.'
 verify = 2'; 
@@ -139,7 +140,7 @@ accept = '.$unix_socket_file;
 
 #----------------------------
 
-my $stunnel = '../src/stunnel';
+my $stunnel = '../src/stunnel-msspi';
 
 
 #-----------------------------------------------------------------------------
@@ -182,17 +183,6 @@ my $stunnel = '../src/stunnel';
 }
 
 #-----------------------------------------------------------------------------
-sub RunCmd($$) {
-    print "\n+++++++++++++++++++++++++++++++++\n";
-    my $info = shift;
-    my $cmd = shift;
-    print $info.": \n";
-    print $cmd." \n\n";
-    my $res = system($cmd);
-    print "\n" . $res. " \n\n";
-    print "+++++++++++++++++++++++++++++++++ \n\n\n";
-    return $res;
-}
 
 sub PrepareAndRunConf($$$$) {
     my $conf = shift;
@@ -212,12 +202,13 @@ sub PrepareAndRunConf($$$$) {
 
 #-----------------------------------------------------------------------------
 sub KillStunnels() {
-    my $cmd = "ps -A -o pid -o args | grep stunnel_ | grep rtests | grep -v grep || echo ok";
 
-    my $res = RunCmd("Check Stunnel process", $cmd);
+    my $cmd = "ps -A -o pid -o args | grep src/stunnel | grep -v grep || echo ok";
+    #RunCmd("Kill stunnel process", $cmd);
+    my $res = `$cmd`;
     Parser($res);
     if (scalar @ParserResult > 0) {
-        RunCmd("kill", "/bin/kill -s KILL " . join(' ', @ParserResult));
+        RunCmd("Kill stunnel", "/bin/kill -s KILL " . join(' ', @ParserResult));
         sleep(2);
     }
     RunCmd("Remove logs", "rm " . $DataPath . 'stunnel_serv.log') if (-f $DataPath . 'stunnel_serv.log');
