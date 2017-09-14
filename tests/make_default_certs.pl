@@ -14,7 +14,7 @@ sub DisableInstallCertWindow($);
     
     #RunCmd("DelCert", $cryptcp . ' -delcert -m -yes -dn CN= -nochain');
     RunCmd("DelCert", $cryptcp . ' -delcert -u -yes -dn CN= -nochain');
-    RunCmd("DelCert", $csptest . ' -notime -noerrorwait -keyset -silent -deletekeyset -pattern "" -verifyco -provtype 75 -provider "Crypto-Pro GOST R 34.10-2001 KC1 CSP" ');
+    RunCmd("DelCert", $csptest . ' -notime -noerrorwait -keyset -silent -deletekeyset -pattern "" -verifyco -provtype 81');
     
     #delete ssl certs and keys
     RunCmd('DelCertRSA', 'rm ' . $DataPath . 'stunnelsrvRSA.cer') if (-e $DataPath . 'stunnelsrvRSA.cer');
