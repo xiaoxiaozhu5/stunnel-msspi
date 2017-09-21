@@ -44,7 +44,7 @@ before_script:
   - if [ $MSSPI == 'yes' ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
 
 script:
-- ./configure $CONFIGURE_OPTIONS && make && make test
+- ./configure $CONFIGURE_OPTIONS && make
 - if [ $MSSPI == 'yes' ]; then mv ./src/stunnel ./src/stunnel-msspi && cd tests && sudo perl test-stunnel-msspi.pl && cd ../src && tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi && cd ..; fi
 
 after_success:
