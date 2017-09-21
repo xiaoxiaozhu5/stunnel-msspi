@@ -38,6 +38,7 @@ sub DisableInstallCertWindow($);
     RunCmd('MakeDSRF', "/opt/cprocsp/sbin/amd64/cpconfig -hardware rndm -configure cpsd -add string /db2/kis_1 /var/opt/cprocsp/dsrf/db2/kis_1");
     RunCmd('MakeDSRF', "cp ./mydsrf /var/opt/cprocsp/dsrf/db1/kis_1");
     RunCmd('MakeDSRF', "cp ./mydsrf /var/opt/cprocsp/dsrf/db2/kis_1");
+    RunCmd('Restart csp-daemon', "/etc/init.d/cprocsp restart");
     
     #new certs
     RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -ku -du -ex -ca http://cryptopro.ru/certsrv -enable-install-root");
