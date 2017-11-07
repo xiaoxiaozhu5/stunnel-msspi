@@ -46,7 +46,7 @@ before_script:
 script:
   - ./configure $CONFIGURE_OPTIONS
   - make
-  - if [ -z $MSSPI ]; make test || ( for FILE in tests/logs/*.log; do echo "*** $FILE ***"; cat "$FILE"; done; false ); fi
+  - if [ -z "$MSSPI" ]; then make test || ( for FILE in tests/logs/*.log; do echo "*** $FILE ***"; cat "$FILE"; done; false ); fi
   - if [ $MSSPI == 'yes' ]; then mv ./src/stunnel ./src/stunnel-msspi && cd tests && sudo perl test-stunnel-msspi.pl && cd ../src && tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi && cd ..; fi
 
 after_success:
