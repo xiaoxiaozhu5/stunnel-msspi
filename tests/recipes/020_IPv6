@@ -11,18 +11,18 @@ start() {
 
   [https client]
   client = yes
-  accept = :::${http1}
+  accept = 127.0.0.1:${http1}
   connect = :::${https}
 
   [https server]
   accept = :::${https}
-  connect = :::${http2}
+  connect = 127.0.0.1:${http2}
   cert = ${script_path}/certs/stunnel.pem
 EOT
 }
 
 check_ports "020_IPv6"
-if [ -n "$(grep "IPv6" results.log)" ]
+if grep -q "IPv6" "results.log" && PATH="${PATH}:/sbin:/usr/sbin" ifconfig | grep -q "inet6" && [ -n "$(command -v ncat)" ] # nc does not support IPv6
   then
     start 2> "error.log"
     test_log_for "020_IPv6" "success" 2>> "stderr.log"

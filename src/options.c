@@ -1782,6 +1782,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
     switch(cmd) {
     case CMD_BEGIN:
         section->failover=FAILOVER_RR;
+        section->seq=0;
         break;
     case CMD_EXEC:
         if(strcasecmp(opt, "failover"))
