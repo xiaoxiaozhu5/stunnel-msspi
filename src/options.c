@@ -1539,6 +1539,67 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         break;
     }
 
+#ifdef MSSPISSL
+    /* msspi */
+    switch( cmd ) {
+    case CMD_BEGIN:
+        section->option.msspi = 1;
+        break;
+    case CMD_EXEC:
+        if( strcasecmp( opt, "msspi" ) )
+            break;
+        if( !strcasecmp( arg, "yes" ) )
+            section->option.msspi = 1;
+        else if( !strcasecmp( arg, "no" ) )
+            section->option.msspi = 0;
+        else
+            return "The argument needs to be either 'yes' or 'no'";
+        return NULL; /* OK */
+    case CMD_END:
+        break;
+    case CMD_DUP:
+        section->option.msspi = new_service_options.option.msspi;
+        break;
+    case CMD_FREE:
+        break;
+    case CMD_DEFAULT:
+    	s_log(LOG_NOTICE, "%-22s = yes", "msspi" );
+        break;
+    case CMD_HELP:
+        s_log( LOG_NOTICE, "%-22s = yes|no msspi mode", "msspi" );
+        break;
+    }
+
+    /* pin */
+    switch( cmd )
+    {
+        case CMD_BEGIN:
+            section->pin = NULL;
+            break;
+        case CMD_EXEC:
+            if( strcasecmp( opt, "pin" ) &&
+                strcasecmp( opt, "pincode" ) )
+                break;
+            if( arg[0] )
+                section->pin = str_dup_detached( arg );
+            else
+                return "The pin is empty";
+            return NULL; /* OK */
+        case CMD_END:
+            break;
+        case CMD_DUP:
+            section->pin = str_dup_detached( new_service_options.pin );
+            break;
+        case CMD_FREE:
+            break;
+        case CMD_DEFAULT:
+            break;
+        case CMD_HELP:
+            s_log( LOG_NOTICE, "%-22s = pin", "pin" );
+            break;
+    }
+#endif
+
     /* client */
     switch(cmd) {
     case CMD_BEGIN:
@@ -3275,6 +3336,14 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         }
         return NULL; /* OK */
     case CMD_END:
+#ifdef MSSPISSL
+        if( section->option.msspi )
+        {
+            if( section->option.verify_peer && !section->ca_dir )
+                return "\"CApath\" has to be configured";
+        }
+        else
+#endif
         if((section->option.verify_chain || section->option.verify_peer) &&
                 !section->ca_file && !section->ca_dir)
             return "Either \"CAfile\" or \"CApath\" has to be configured";

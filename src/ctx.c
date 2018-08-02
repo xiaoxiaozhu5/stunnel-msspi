@@ -525,6 +525,10 @@ NOEXPORT int auth_init(SERVICE_OPTIONS *section) {
         }
         cert_needed=key_needed=0; /* don't load any PEM files */
     }
+#ifdef MSSPISSL
+    if( section->option.msspi )
+        return 0;
+#endif
     if(cert_needed && load_cert_file(section))
         return 1; /* FAILED */
     if(key_needed && load_key_file(section))

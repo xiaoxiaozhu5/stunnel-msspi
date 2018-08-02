@@ -36,7 +36,81 @@
  */
 
 #include "common.h"
+
+#ifdef MSSPISSL
+int SSL_connect_prx( SSL * s ) { return SSL_connect( s ); }
+int SSL_accept_prx( SSL * s ) { return SSL_accept( s ); }
+int SSL_write_prx( SSL * s, const void * buf, int num ) { return SSL_write( s, buf, num ); }
+int SSL_read_prx( SSL * s, void * buf, int num ) { return SSL_read( s, buf, num ); }
+void SSL_free_prx( SSL * s ) { SSL_free( s ); }
+int SSL_shutdown_prx( SSL * s ) { return SSL_shutdown( s ); }
+void SSL_set_shutdown_prx( SSL * s, int mode ) { SSL_set_shutdown( s, mode ); }
+int SSL_get_shutdown_prx( const SSL * s ) { return SSL_get_shutdown( s ); }
+const char * SSL_get_version_prx( const SSL * s ) { return SSL_get_version( s ); }
+int SSL_version_prx( const SSL * s ) { return SSL_version( s ); }
+int SSL_pending_prx( const SSL * s ) { return SSL_pending( s ); }
+int SSL_get_error_prx( const SSL *s, int ret_code ) { return SSL_get_error( s, ret_code ); }
+int SSL_get_error_msspi( MSSPI_HANDLE h )
+{
+    int err = msspi_state( h );
+    if( err & MSSPI_ERROR )
+        return SSL_ERROR_SYSCALL;
+    if( err & MSSPI_SENT_SHUTDOWN && err & MSSPI_RECEIVED_SHUTDOWN )
+        return SSL_ERROR_ZERO_RETURN;
+    if( err & MSSPI_WRITING )
+    {
+        if( err & MSSPI_LAST_PROC_WRITE )
+            return SSL_ERROR_WANT_WRITE;
+        if( err & MSSPI_READING )
+            return SSL_ERROR_WANT_READ;
+        return SSL_ERROR_WANT_WRITE;
+    }
+    if( err & MSSPI_READING )
+        return SSL_ERROR_WANT_READ;
+    return SSL_ERROR_NONE;
+}
+int SSL_get_shutdown_msspi( MSSPI_HANDLE h )
+{
+    int err = msspi_state( h );
+    if( err & MSSPI_ERROR || ( err & MSSPI_SENT_SHUTDOWN && err & MSSPI_RECEIVED_SHUTDOWN ) )
+        return SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
+    if( err & MSSPI_SENT_SHUTDOWN )
+        return SSL_SENT_SHUTDOWN;
+    if( err & MSSPI_RECEIVED_SHUTDOWN )
+        return SSL_RECEIVED_SHUTDOWN;
+    return 0;
+}
+#endif /* MSSPISSL */
+
 #include "prototypes.h"
+
+#ifdef MSSPISSL
+int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
+{
+    int io = BIO_read( c->rbio, buf, len );
+
+    if( io > 0 )
+        return io;
+
+    if( BIO_should_read( c->rbio ) )
+        return -1;
+
+    return 0;
+}
+
+int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
+{
+    int io = BIO_write( c->wbio, buf, len );
+
+    if( io > 0 )
+        return io;
+
+    if( BIO_should_write( c->wbio ) )
+        return -1;
+
+    return 0;
+}
+#endif /* MSSPISSL */
 
 #ifndef SHUT_RD
 #define SHUT_RD 0
@@ -493,6 +567,110 @@ NOEXPORT void ssl_start(CLI *c) {
         SSL_set_accept_state(c->ssl);
     }
 
+#ifdef MSSPISSL
+    c->msh = NULL;
+    if( c->opt->option.msspi )
+    {
+        c->rbio = SSL_get_rbio( c->ssl );
+        c->wbio = SSL_get_wbio( c->ssl );
+        c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
+        if( !c->msh )
+        {
+            s_log( LOG_ERR, "msspi: open failed" );
+            throw_exception( c, 1 );
+        }
+        if( c->opt->sni )
+            msspi_set_hostname( c->msh, c->opt->sni );
+        if( c->opt->option.request_cert )
+            msspi_set_peerauth( c->msh, 1 );
+        if( c->opt->cert && !msspi_set_mycert( c->msh, c->opt->cert, 0 ) )
+        {
+            const long int MAX_SIZE = 1024 * 1024;
+            char is_ok = 0;
+            const char *errstr = "unknown";
+            long int size_file = 0;
+            FILE *cert_file = NULL;
+            char *str_file = NULL;
+            BIO *bio = NULL;
+            X509 *certificate = NULL;
+            unsigned char *buf = NULL;
+
+            s_log(LOG_INFO, "msspi: try open cert = \"%s\" as file", c->opt->cert);
+
+            for(;;) {
+                if ((cert_file = fopen(c->opt->cert, "rb")) == NULL) {
+                    errstr = "can not open file";
+                    break;
+                }
+                if (fseek(cert_file, 0, SEEK_END) == -1L) {
+                    errstr = "can not read file";
+                    break;
+                }
+                if ((size_file = ftell(cert_file)) > MAX_SIZE) {
+                    errstr = "file too large";
+                    break;
+                }
+                if ((fseek(cert_file, 0, 0)) == -1L) {
+                    errstr = "can not read file";
+                    break;
+                }
+                if ((str_file = (char *)malloc(sizeof(char) * (size_t)size_file)) == NULL) {
+                    errstr = "can not allocate memory for file";
+                    break;
+                }
+                if (fread(str_file, sizeof(char), (size_t)size_file, cert_file) != (unsigned long int)size_file) {
+                    errstr = "can not read file";
+                    break;
+                }
+                /* try DER */
+                if( msspi_set_mycert( c->msh, (char *)str_file, (int)size_file ) )
+                {
+                    is_ok = 1;
+                    break;
+                }
+                /* try PEM */
+                if ((bio = BIO_new(BIO_s_mem())) == NULL) {
+                    errstr = "BIO_new failed";
+                    break;
+                }
+                if (BIO_puts(bio, str_file) <= 0) {
+                    errstr = "BIO_puts failed";
+                    break;
+                }
+                if ((certificate = PEM_read_bio_X509_AUX(bio, NULL, NULL, NULL)) != NULL) {
+                    if ((size_file = i2d_X509(certificate, &buf)) < 0) {
+                        errstr = "i2d_X509 failed";
+                        break;
+                    }
+                    if( msspi_set_mycert( c->msh, (char *)buf, (int)size_file ) )
+                    {
+                        is_ok = 1;
+                        break;
+                    }
+                }
+
+                errstr = "bad file format";
+                break;
+            }
+
+            if (cert_file) fclose(cert_file);
+            if (str_file) free(str_file);
+            if (bio) BIO_free_all(bio);
+            if (certificate) X509_free(certificate);
+            if (buf) OPENSSL_free(buf);
+            if (!is_ok) {
+                s_log( LOG_ERR, "msspi: set_mycert failed: \"%s\" (cert = \"%s\")",errstr ,c->opt->cert );
+                throw_exception( c, 1 );
+            }
+        }
+        if( c->opt->cert && !msspi_set_mycert_options( c->msh, 1, c->opt->pin, 1 ) )
+        {
+            s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", c->opt->cert, c->opt->pin ? c->opt->pin : "" );
+            throw_exception( c, 1 );
+        }
+    }
+#endif
+
     if(c->opt->option.require_cert)
         s_log(LOG_INFO, "Peer certificate required");
     else
@@ -559,6 +737,94 @@ NOEXPORT void ssl_start(CLI *c) {
             sslerror("SSL_accept");
         throw_exception(c, 1);
     }
+#ifdef MSSPISSL
+    if( c->msh )
+    {
+        if( c->opt->log_level >= LOG_INFO )
+        {
+            PSecPkgContext_CipherInfo cipherinfo = msspi_get_cipherinfo( c->msh );
+
+            if( !cipherinfo )
+            {
+                s_log( LOG_ERR, "msspi: get_cipherinfo failed" );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: %s %s (%04X)", msspi_get_version( c->msh ),
+                   c->opt->option.client ? "connected" : "accepted",
+                   cipherinfo->dwCipherSuite );
+        }
+
+        if( c->opt->option.require_cert )
+        {
+            size_t count = 0;
+            if( !msspi_get_peercerts( c->msh, 0, 0, &count ) || count == 0 )
+            {
+                s_log( LOG_ERR, "msspi: no peer cert (require_cert = 1)" );
+                throw_exception( c, 1 );
+            }
+        }
+
+        if( c->opt->option.verify_chain )
+        {
+            int level = LOG_ERR;
+            const char * errinfo = "failed (MSSPI_VERIFY_ERROR)";
+            switch( msspi_verify( c->msh ) )
+            {
+            case MSSPI_VERIFY_OK:
+                level = LOG_INFO;
+                errinfo = "OK";
+                break;
+            case CERT_E_CN_NO_MATCH:
+            {
+#if OPENSSL_VERSION_NUMBER>=0x10002000L
+                if( c->opt->sni && c->opt->check_host )
+                {
+                    NAME_LIST * ptr;
+                    for( ptr = c->opt->check_host; ptr; ptr = ptr->next )
+                    {
+                        msspi_set_hostname( c->msh, ptr->name );
+                        if( msspi_verify( c->msh ) == MSSPI_VERIFY_OK )
+                            break;
+                    }
+
+                    msspi_set_hostname( c->msh, c->opt->sni );
+
+                    if( ptr )
+                    {
+                        level = LOG_INFO;
+                        errinfo = "OK";
+                        break;
+                    }
+                }
+#endif /* OPENSSL_VERSION_NUMBER>=0x10002000L */
+
+                errinfo = "failed (CERT_E_CN_NO_MATCH)";
+                break;
+            }
+            default:
+                break;
+            }
+
+            s_log( level, "msspi: verify %s", errinfo );
+            if( level == LOG_ERR )
+                throw_exception( c, 1 );
+        }
+
+        if( c->opt->option.verify_peer )
+        {
+            if( !msspi_verifypeer( c->msh, c->opt->ca_dir ) )
+            {
+                s_log( LOG_ERR, "msspi: verifypeer failed (CApath = \"%s\")", c->opt->ca_dir );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: verifypeer OK" );
+        }
+
+        return;
+    }
+#endif
     print_cipher(c);
 }
 
@@ -1397,6 +1663,9 @@ NOEXPORT SOCKET connect_remote(CLI *c) {
         if(!connect_init(c, c->connect_addr.addr[c->idx].sa.sa_family) &&
                 !s_connect(c, &c->connect_addr.addr[c->idx],
                     addr_len(&c->connect_addr.addr[c->idx]))) {
+#ifdef MSSPISSL
+            if( !c->msh )
+#endif
             if(c->ssl)
                 idx_cache_save(SSL_get_session(c->ssl),
                     &c->connect_addr.addr[c->idx]);

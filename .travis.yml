@@ -1,16 +1,23 @@
-sudo: false
+sudo: enabled
+
+dist: trusty
 
 language: c
 
 os:
-  - linux
-  - osx
+- linux
 
 compiler:
-  - gcc
-  - clang
+- gcc
+
+before install:
+- sudo apt-get -qq update
 
 env:
+  global:
+  - secure: twdfThD5M6bIeGTGiS7vsUUtYpUOHobh13n/s0Q1aiSbAgZ9WMrXZ+b0UJzuB12NrqT64IlfR8qdv023Arf+bMtVuiK1GfF8AGk2ntIFE7deF/D4Ba8JzKIAL/rRB3ensEJXlXIdxoGVMr5j1oEljl5qsAJLay0cQZfAZBN+1hxZ2ONGbuejPRTjLUxPtdl3oIt1VR4qZG/GOONc3lXPgrvNQvwuVfpHZmp+raTyuQgm4l00mgEbYNm9zbSbRYYAA1sQQBSt0QisUa4SJ5e47/GBVMnAOOwo3huAxex1zQ+8FJVrWOc/1E7X8cL5EYxNM5CqSa3Yc3q3lOWtSuVUvDZ0K9G2VpkB5oWGYDnqZLxbOA70+6wjRVIFMJ56dG9pEL9ofyPtDDQOO34hXso1WIa1oh41520xDCprB/g0BMwJrZQJ3mui5j7Kub5HPujq/lsas7CUEQoaOILaFGerLXnh3J+3JwYN83cPA6av4RSouFfH6X0GBnv6ZGCWFYBOqXBWNrKGIFFzJ/AOxbjB82jbeOD2tsB3vY4md9lcSBXpoS7uhbKrBw4JWMSm9sR2sDudsM2fZXh155Uv8GHcsChPoibkw/71ZSm/y9z6qGAwmaYz3bCX74cN9YhSGIG1UqMS4BbWnjALaQajqSSAtIF8qnwnuTEFgVmsq2+skBQ=
+  matrix:
+  - CONFIGURE_OPTIONS='--with-threads=fork --enable-msspi' MSSPI='yes' CSPMODE='kc2'
   - CONFIGURE_OPTIONS='--with-threads=pthread'
   - CONFIGURE_OPTIONS='--with-threads=fork'
   - CONFIGURE_OPTIONS='--with-threads=ucontext'
@@ -18,17 +25,37 @@ env:
 
 addons:
   apt:
+    sources:
+    - ubuntu-toolchain-r-test
     packages:
     - autoconf-archive
     - libssl-dev
     - libwrap0-dev
     - nmap
+    - g++-4.9
+
+install:
+- if [ $MSSPI == 'yes' ]; then wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-amd64_deb.tgz && tar -xvf linux-amd64_deb.tgz && sudo linux-amd64_deb/install.sh $CSPMODE; fi
 
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install openssl autoconf-archive nmap expect; fi; true
   - autoreconf -fvi && touch src/dhparam.c
+  - if [ $MSSPI == 'yes' ]; then ln -s /usr/bin/g++-4.9 g++ && cd src/msspi/build_linux && make && cd ../../.. ; fi
 
 script:
   - ./configure $CONFIGURE_OPTIONS
   - make
-  - make test || ( for FILE in tests/logs/*.log; do echo "*** $FILE ***"; cat "$FILE"; done; false )
+  - if [ -z "$MSSPI" ]; then make test || ( for FILE in tests/logs/*.log; do echo "*** $FILE ***"; cat "$FILE"; done; false ); fi
+  - if [ $MSSPI == 'yes' ]; then mv ./src/stunnel ./src/stunnel-msspi && cd tests && sudo perl test-stunnel-msspi.pl && cd ../src && tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi && cd ..; fi
+
+after_success:
+deploy:
+  provider: releases
+  api_key:
+    secure: NdsZjaeC2SU8Eo9uL4gwxhCSIfYbDNxBxLi6jJsm/u55Ouqg4Iz0DOYx0l+C0yemBhSX8lnShhjRPKRbEMLRNDvBi/f55CCHOMhk0KlQt/fvkBAsPf/bHLle0KEszj33rfklF1uc1/R2PJn8iwkuVTslVmLCKOB+1E5KWRgWgQvjsEWl26KBH32RM6sqi9jXeKPgdNLxZYon//fhktEKhBsp8mtc6qigvUEhzwuHAREwdyCy6A46dNNfzxg3I01TpooOSCZsdkRg9vvOT0H7agF3Dj6RocozuzIj2NoIka5e4rKPW/EYqd0yLM77f+pgs10I30SNbQSqJcYSIfHfJNiup+q2rnGgQQHOowg7Gqj//ffVEwyhCM4F90QlTCcjNECmaRfhIjQk5ICeakNlWojSBDcA0yEmnTu7BKTsZJOnjLFH8r6DrJmSta2ZNMdacgEaG+al3CoW57GOp6Nukbo1PGBYfZ3L/2QvguklKQGL/rAoVbR+PujjLyqfNwpt8ije9N7SvqporVeAOmpMGrNDQ94Ss3cXMhaJUJxfdg5lMsBm2qUytn5jeO4BTtBgyiyK/LyWMJg3NkUx1egVJbkoOwHSRT0VH7y8uYzvxYtYtTikBdmgfd25wZ+dQTANWbiFtkQs/DZqCnJ2nFTDNfTKyhtmSJZJXM6/Xerxt3c=
+  skip_cleanup: true
+  file:
+    - "src/${TRAVIS_TAG}_linux-amd64.tar.gz"
+  on:
+    tags: true
+    condition: $MSSPI = "yes"

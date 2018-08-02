@@ -218,6 +218,9 @@ typedef struct service_options_struct {
     char *cipher_list;
     char *cert;                                             /* cert filename */
     char *key;                               /* pem (priv key/cert) filename */
+#ifdef MSSPISSL
+    char *pin;                                     /* pin-code for msspi key */
+#endif
     long session_size, session_timeout;
     long unsigned ssl_options_set;
 #if OPENSSL_VERSION_NUMBER>=0x009080dfL
@@ -278,6 +281,9 @@ typedef struct service_options_struct {
 
         /* on/off switches */
     struct {
+#ifdef MSSPISSL
+        unsigned msspi:1;               /* use msspi */
+#endif
         unsigned request_cert:1;        /* request a peer certificate */
         unsigned require_cert:1;        /* require a client certificate */
         unsigned verify_chain:1;        /* verify certificate chain */
@@ -383,6 +389,11 @@ typedef enum {
 } RENEG_STATE;
 
 typedef struct {
+#ifdef MSSPISSL
+    MSSPI_HANDLE msh;
+    BIO * rbio;
+    BIO * wbio;
+#endif
     jmp_buf *exception_pointer;
 
     SSL *ssl;                                              /* TLS connection */
@@ -833,6 +844,58 @@ UI_METHOD *UI_stunnel(void);
 ICON_IMAGE load_icon_default(ICON_TYPE);
 ICON_IMAGE load_icon_file(const char *);
 #endif
+
+#ifdef MSSPISSL
+int SSL_connect_prx( SSL * s );
+#undef SSL_connect
+#define SSL_connect( s ) ( c->msh ? msspi_connect( c->msh ) : SSL_connect_prx( s ) )
+
+int SSL_accept_prx( SSL * s );
+#undef SSL_accept
+#define SSL_accept( s ) ( c->msh ? msspi_accept( c->msh ) : SSL_accept_prx( s ) )
+
+int SSL_write_prx( SSL * s, const void * buf, int num );
+#undef SSL_write
+#define SSL_write( s, b, n ) ( c->msh ? msspi_write( c->msh, b, n ) : SSL_write_prx( s, b, n ) )
+
+int SSL_read_prx( SSL * s, void * buf, int num );
+#undef SSL_read
+#define SSL_read( s, b, n ) ( c->msh ? msspi_read( c->msh, b, n ) : SSL_read_prx( s, b, n ) )
+
+void SSL_free_prx( SSL * s );
+#undef SSL_free
+#define SSL_free( s ) { SSL_free_prx( s ); if( c->msh ){ msspi_close( c->msh ); c->msh = NULL; } }
+
+int SSL_shutdown_prx( SSL * s );
+#undef SSL_shutdown
+#define SSL_shutdown( s ) ( c->msh ? msspi_shutdown( c->msh ) : SSL_shutdown_prx( s ) )
+
+void SSL_set_shutdown_prx( SSL * s, int mode );
+#undef SSL_set_shutdown
+#define SSL_set_shutdown( s, m ) { if( c->msh ) msspi_shutdown( c->msh ); else SSL_set_shutdown_prx( s, m ); }
+
+int SSL_get_shutdown_prx( const SSL * s );
+int SSL_get_shutdown_msspi( MSSPI_HANDLE h );
+#undef SSL_get_shutdown
+#define SSL_get_shutdown( s ) ( c->msh ? SSL_get_shutdown_msspi( c->msh ) : SSL_get_shutdown_prx( s ) )
+
+const char * SSL_get_version_prx( const SSL * s );
+#undef SSL_get_version
+#define SSL_get_version( s ) ( c->msh ? msspi_get_version( c->msh ) : SSL_get_version_prx( s ) )
+
+int SSL_version_prx( const SSL * s );
+#undef SSL_version
+#define SSL_version( s ) ( c->msh ? TLS1_VERSION : SSL_version_prx( s ) )
+
+int SSL_pending_prx( const SSL * s );
+#undef SSL_pending
+#define SSL_pending( s ) ( c->msh ? msspi_pending( c->msh ) : SSL_pending_prx( s ) )
+
+int SSL_get_error_prx( const SSL *s, int ret_code );
+int SSL_get_error_msspi( MSSPI_HANDLE h );
+#undef SSL_get_error
+#define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh ) : SSL_get_error_prx( s, i ) )
+#endif /* MSSPISSL */
 
 #endif /* defined PROTOTYPES_H */
 
