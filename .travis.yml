@@ -2,6 +2,10 @@ sudo: enabled
 
 dist: trusty
 
+branches:
+  only:
+  - /.*/
+
 language: c
 
 os:
