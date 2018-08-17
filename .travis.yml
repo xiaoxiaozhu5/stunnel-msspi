@@ -37,23 +37,22 @@ addons:
     - autoconf-archive
     - libssl-dev
     - libwrap0-dev
-    - nmap
     - g++-4.9
 
 install:
-- if [ $MSSPI == 'yes' ]; then
+- if [ "$MSSPI" = "yes" ]; then
       wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/linux-${ARCH_DIST}.tgz &&
       tar -xvf linux-${ARCH_DIST}.tgz
   fi
 before_script:
-  - if [ $TRAVIS_OS_NAME == 'osx' ]; then brew update; brew install openssl autoconf-archive nmap expect; fi; true
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; brew install openssl autoconf-archive expect; fi; true
 
 script:
-  - if [ $ARCH == 'amd64' ]; then
+  - if [ "$ARCH = "amd64" ]; then
       bash -ex ./build_amd64.sh
     fi
     
-    if [ $ARCH == 'armv7' ]; then
+    if [ "$ARCH" = "armv7" ]; then
       bash -ex ./build_armv7.sh
     fi
 

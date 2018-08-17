@@ -6,7 +6,7 @@ MIRROR=http://archive.raspbian.org/raspbian
 VERSION=stretch
 CHROOT_ARCH=armhf
 ARCH=arm
-TRAVIS_BUILD_DIR=/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
+#TRAVIS_BUILD_DIR=/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
 
 # Debian package dependencies for the host
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
@@ -28,7 +28,7 @@ if [ ! -e "/.chroot_is_done" ]; then
 
     # Create chrooted environment
     sudo mkdir ${CHROOT_DIR}
-    sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential,g++-4.9,autoconf-archive,libssl-dev,libwrap0-dev,nmap \
+    sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential,g++-4.9,autoconf-archive,libssl-dev,libwrap0-dev \
         --arch=${CHROOT_ARCH} ${VERSION} ${CHROOT_DIR} ${MIRROR}
     sudo cp /usr/bin/qemu-arm-static ${CHROOT_DIR}/usr/bin/
     sudo chroot ${CHROOT_DIR} ./debootstrap/debootstrap --second-stage
@@ -51,13 +51,13 @@ if [ ! -e "/.chroot_is_done" ]; then
 
     # Create build dir and copy travis build files to our chroot environment
     sudo mkdir -p ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}
-    sudo rsync -av ${TRAVIS_BUILD_DIR}/ ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}/
+    sudo rsync -av ${TRAVIS_BUILD_DIR}/ ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/
 
     # Indicate chroot environment has been set up
     sudo touch ${CHROOT_DIR}/.chroot_is_done
 
     # Call ourselves again which will cause tests to run
-    sudo chroot ${CHROOT_DIR} bash -c "cd ${TRAVIS_BUILD_DIR} && ./build_armv7.sh"
+    sudo chroot ${CHROOT_DIR} bash -ex "cd ${TRAVIS_BUILD_DIR} && ./build_armv7.sh"
     #-----------------------------------------------------------------------------
 else
     # We are inside ARM chroot
@@ -65,7 +65,7 @@ else
 
     . ./envvars.sh
 
-    if [ $MSSPI == "yes" ]; then
+    if [ "$MSSPI" = "yes" ]; then
         sudo linux-armhf_deb/install.sh $CSPMODE
         cd src/msspi/build_linux && 
         make &&
@@ -78,7 +78,7 @@ else
 
     make
 
-    if [ $MSSPI == "yes" ]; then 
+    if [ "$MSSPI" = "yes" ]; then 
         mv ./src/stunnel ./src/stunnel-msspi && 
         cd ./src &&
         tar -cvzf ${TRAVIS_TAG}_linux-armhf.tar.gz stunnel-msspi && 
@@ -88,4 +88,4 @@ else
     exit 0
 fi
 
-mv ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf.tar.gz ./src/
+mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf.tar.gz ./src/
