@@ -49,11 +49,11 @@ before_script:
 
 script:
   - if [ "$ARCH" = "amd64" ]; then
-      bash -ex ./build_amd64.sh
+      bash -ex ./build_amd64.sh;
     fi
     
     if [ "$ARCH" = "armv7" ]; then
-      bash -ex ./build_armv7.sh
+      bash -ex ./build_armv7.sh;
     fi
 
 after_success:
