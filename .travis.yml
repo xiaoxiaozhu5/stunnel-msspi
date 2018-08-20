@@ -42,7 +42,7 @@ addons:
 install:
 - if [ "$MSSPI" = "yes" ]; then
       wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/${ARCH_DIST}_deb.tgz &&
-      tar -xvf linux-${ARCH_DIST}.tgz
+      tar -xvf ${ARCH_DIST}_deb.tgz
   fi
 before_script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; brew install openssl autoconf-archive expect; fi; true
