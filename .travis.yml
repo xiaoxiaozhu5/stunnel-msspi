@@ -48,7 +48,7 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; brew install openssl autoconf-archive expect; fi; true
 
 script:
-  - if [ "$ARCH = "amd64" ]; then
+  - if [ "$ARCH" = "amd64" ]; then
       bash -ex ./build_amd64.sh
     fi
     
