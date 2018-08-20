@@ -62,6 +62,7 @@ if [ ! -e "/.chroot_is_done" ]; then
     echo "export CONFIGURE_OPTIONS=${CONFIGURE_OPTIONS}" >> envvars.sh
     echo "export MSSPI=${MSSPI}" >> envvars.sh
     echo "export CSPMODE=${CSPMODE}" >> envvars.sh
+    echo "export TRAVIS_TAG=${TRAVIS_TAG}" >> envvars.sh
     chmod a+x envvars.sh
 
     # Install dependencies inside chroot (g++-4.9 already exist)
