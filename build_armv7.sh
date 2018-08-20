@@ -3,7 +3,7 @@
 
 CHROOT_DIR=/tmp/armv7-chroot
 MIRROR=http://archive.raspbian.org/raspbian
-VERSION=stretch
+VERSION=jessie
 CHROOT_ARCH=armhf
 ARCH=arm
 #TRAVIS_BUILD_DIR=/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
@@ -12,13 +12,29 @@ ARCH=arm
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
 # Debian package dependencies for the chrooted environment
-GUEST_DEPENDENCIES="git m4 autoconf libtool sudo python"
+# TODO: Fix lsb-core lsb-core-noarch (when someone fix CSP)
+GUEST_DEPENDENCIES="build-essential git m4 autoconf libtool sudo python lsb-core lsb-core-noarch"
 
 # Command used to run the tests
 TEST_COMMAND="make test"
 
+#sudo mkdir /tmp/armv7-chroot
 
+#sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential,autoconf-archive,libssl-dev,libwrap0-dev --arch=armhf jessie /tmp/armv7-chroot http://archive.raspbian.org/raspbian
 
+#sudo cp /usr/bin/qemu-arm-static /tmp/armv7-chroot/usr/bin/
+
+#sudo chroot /tmp/armv7-chroot ./debootstrap/debootstrap --second-stage
+
+#sudo sbuild-createchroot --arch=armhf --foreign --setup-only jessie /tmp/armv7-chroot http://archive.raspbian.org/raspbian
+
+#sudo chroot /tmp/armv7-chroot apt-get update
+
+#sudo chroot /tmp/armv7-chroot apt-get --allow-unauthenticated install -qq -y build-essential git m4 autoconf libtool sudo python
+
+#sudo mkdir -p /tmp/armv7-chroot/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
+
+#sudo rsync -av /home/full/Desktop/git-full/ANOTHER_GIT/stunnel/ /tmp/armv7-chroot/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
 
 if [ ! -e "/.chroot_is_done" ]; then
     #-----------------------------------------------------------------------------
@@ -28,7 +44,7 @@ if [ ! -e "/.chroot_is_done" ]; then
 
     # Create chrooted environment
     sudo mkdir ${CHROOT_DIR}
-    sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential,g++-4.9,autoconf-archive,libssl-dev,libwrap0-dev \
+    sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential,autoconf-archive,libssl-dev,libwrap0-dev \
         --arch=${CHROOT_ARCH} ${VERSION} ${CHROOT_DIR} ${MIRROR}
     sudo cp /usr/bin/qemu-arm-static ${CHROOT_DIR}/usr/bin/
     sudo chroot ${CHROOT_DIR} ./debootstrap/debootstrap --second-stage
@@ -44,20 +60,20 @@ if [ ! -e "/.chroot_is_done" ]; then
     echo "export CSPMODE=${CSPMODE}" >> envvars.sh
     chmod a+x envvars.sh
 
-    # Install dependencies inside chroot
+    # Install dependencies inside chroot (g++-4.9 already exist)
     sudo chroot ${CHROOT_DIR} apt-get update
     sudo chroot ${CHROOT_DIR} apt-get --allow-unauthenticated install \
         -qq -y ${GUEST_DEPENDENCIES}
 
     # Create build dir and copy travis build files to our chroot environment
-    sudo mkdir -p ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}
+    sudo mkdir -p ${CHROOT_DIR}${TRAVIS_BUILD_DIR}
     sudo rsync -av ${TRAVIS_BUILD_DIR}/ ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/
 
     # Indicate chroot environment has been set up
     sudo touch ${CHROOT_DIR}/.chroot_is_done
 
     # Call ourselves again which will cause tests to run
-    sudo chroot ${CHROOT_DIR} bash -ex "cd ${TRAVIS_BUILD_DIR} && ./build_armv7.sh"
+    sudo chroot ${CHROOT_DIR} bash -cex "cd ${TRAVIS_BUILD_DIR} && ./build_armv7.sh"
     #-----------------------------------------------------------------------------
 else
     # We are inside ARM chroot
@@ -75,6 +91,10 @@ else
     autoreconf -fvi && touch src/dhparam.c
 
     ./configure $CONFIGURE_OPTIONS
+
+    # TODO: Delete it MEGA CRUTCH!!!!(!?!?!?!?!?)
+    cp /opt/cprocsp/lib/arm/libcapi10*4.0.4* ./src/msspi/build_linux/libcapi10.so
+    cp /opt/cprocsp/lib/arm/libcapi20*4.0.4* ./src/msspi/build_linux/libcapi20.so
 
     make
 
