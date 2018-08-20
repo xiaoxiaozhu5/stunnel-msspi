@@ -21,7 +21,7 @@ else
         cd tests && 
         sudo perl test-stunnel-msspi.pl && 
         cd ../src && 
-        tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi && 
+        tar -cvzf ${TRAVIS_TAG}_linux-amd64_deb.tar.gz stunnel-msspi &&
         cd ..; 
     fi
 fi

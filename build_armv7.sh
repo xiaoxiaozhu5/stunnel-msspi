@@ -51,6 +51,10 @@ if [ ! -e "/.chroot_is_done" ]; then
     sudo sbuild-createchroot --arch=${CHROOT_ARCH} --foreign --setup-only \
         ${VERSION} ${CHROOT_DIR} ${MIRROR}
 
+    # Force delete foreign amd64 (TODO: why is not it removed by sbuild?).
+    # Need for apt-get update from binary-armhf instead binary-amd64.
+    sudo chroot ${CHROOT_DIR} dpkg --remove-architecture amd64
+    
     # Create file with environment variables which will be used inside chrooted
     # environment
     echo "export TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}" > envvars.sh
@@ -101,11 +105,11 @@ else
     if [ "$MSSPI" = "yes" ]; then 
         mv ./src/stunnel ./src/stunnel-msspi && 
         cd ./src &&
-        tar -cvzf ${TRAVIS_TAG}_linux-armhf.tar.gz stunnel-msspi && 
+        tar -cvzf ${TRAVIS_TAG}_linux-armhf_deb.tar.gz stunnel-msspi &&
         cd ..; 
     fi
 
     exit 0
 fi
 
-mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf.tar.gz ./src/
+mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf_deb.tar.gz ./src/
