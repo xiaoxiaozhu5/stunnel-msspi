@@ -103,11 +103,17 @@ else
 
     make
 
-    if [ "$MSSPI" = "yes" ]; then 
-        mv ./src/stunnel ./src/stunnel-msspi && 
-        cd ./src &&
-        tar -cvzf ${TRAVIS_TAG}_linux-armhf_deb.tar.gz stunnel-msspi &&
-        cd ..; 
+    if [ -z "$MSSPI" ]; then
+        make test || ( for FILE in tests/logs/*.log; do echo "*** $FILE ***"; cat "$FILE"; done; false );
+    else
+        if [ "$MSSPI" = "yes" ]; then
+            mv ./src/stunnel ./src/stunnel-msspi &&
+            cd tests &&
+            sudo perl test-stunnel-msspi.pl &&
+            cd ../src &&
+            tar -cvzf ${TRAVIS_TAG}_linux-armhf_deb.tar.gz stunnel-msspi &&
+            cd ..;
+        fi
     fi
 
     exit 0
