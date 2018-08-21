@@ -57,13 +57,13 @@ if [ ! -e "/.chroot_is_done" ]; then
     
     # Create file with environment variables which will be used inside chrooted
     # environment
-    echo "export TRAVIS_BUILD_DIR=\'${TRAVIS_BUILD_DIR}\'" > envvars.sh
-    echo "export ARCH=\'${ARCH}\'" >> envvars.sh
-    echo "export CONFIGURE_OPTIONS=\'${CONFIGURE_OPTIONS}\'" >> envvars.sh
-    echo "export MSSPI=\'${MSSPI}\'" >> envvars.sh
-    echo "export CSPMODE=\'${CSPMODE}\'" >> envvars.sh
-    echo "export TRAVIS_TAG=\'${TRAVIS_TAG}\'" >> envvars.sh
-    echo "export CPRO_SUFFIX=\'arm\'" >> envvars.sh
+    echo "export TRAVIS_BUILD_DIR='${TRAVIS_BUILD_DIR}'" > envvars.sh
+    echo "export ARCH='${ARCH}'" >> envvars.sh
+    echo "export CONFIGURE_OPTIONS='${CONFIGURE_OPTIONS}'" >> envvars.sh
+    echo "export MSSPI='${MSSPI}'" >> envvars.sh
+    echo "export CSPMODE='${CSPMODE}'" >> envvars.sh
+    echo "export TRAVIS_TAG='${TRAVIS_TAG}'" >> envvars.sh
+    echo "export CPRO_SUFFIX='arm'" >> envvars.sh
     chmod a+x envvars.sh
     cat envvars.sh
 
