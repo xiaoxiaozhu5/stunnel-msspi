@@ -65,6 +65,7 @@ if [ ! -e "/.chroot_is_done" ]; then
     echo "export TRAVIS_TAG=\'${TRAVIS_TAG}\'" >> envvars.sh
     echo "export CPRO_SUFFIX=\'arm\'" >> envvars.sh
     chmod a+x envvars.sh
+    cat envvars.sh
 
     # Install dependencies inside chroot (g++-4.9 already exist)
     sudo chroot ${CHROOT_DIR} apt-get update
@@ -96,6 +97,7 @@ else
 
     autoreconf -fvi && touch src/dhparam.c
 
+    echo "./configure $CONFIGURE_OPTIONS"
     ./configure $CONFIGURE_OPTIONS
 
     # TODO: Delete it MEGA CRUTCH!!!!(!?!?!?!?!?)
@@ -110,7 +112,7 @@ else
         if [ "$MSSPI" = "yes" ]; then
             mv ./src/stunnel ./src/stunnel-msspi &&
             cd tests &&
-            sudo perl test-stunnel-msspi.pl &&
+            perl test-stunnel-msspi.pl &&
             cd ../src &&
             tar -cvzf ${TRAVIS_TAG}_linux-armhf_deb.tar.gz stunnel-msspi &&
             cd ..;
