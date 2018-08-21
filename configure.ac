@@ -302,7 +302,18 @@ AC_ARG_ENABLE(msspi,
             yes) AC_MSG_RESULT([yes])
                  AC_DEFINE([USE_MSSPI], [1],
                     [Define to 1 to enable MSSPI support])
-                 LIBS="-L./msspi/build_linux -lmsspi $LIBS -lstdc++ -ldl -L/opt/cprocsp/lib/amd64 -lcapi10 -lcapi20"
+
+                 LIBS="-L./msspi/build_linux -lmsspi $LIBS -lstdc++ -ldl"
+                 case "$host_cpu" in
+                    arm*) LIBS="$LIBS -L/opt/cprocsp/lib/arm"
+                           ;;
+                    amd64|x86_64) LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
+                           ;;
+                    *)     LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
+                           ;;
+                 esac
+                 LIBS="$LIBS -lcapi10 -lcapi20"
+
                  ;;
             no)  AC_MSG_RESULT([no])
                  ;;

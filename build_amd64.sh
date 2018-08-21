@@ -1,11 +1,16 @@
 #! /bin/bash
 
+echo "export CPRO_SUFFIX=amd64" > envvars.sh
+chmod a+x envvars.sh
+
 if [ "$MSSPI" = "yes" ]; then
     sudo linux-amd64_deb/install.sh $CSPMODE
     cd src/msspi/build_linux && 
     make &&
     cd ../../.. ;
 fi
+
+. ./envvars.sh
 
 autoreconf -fvi && touch src/dhparam.c
 

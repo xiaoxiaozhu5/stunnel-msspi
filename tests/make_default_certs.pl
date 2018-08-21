@@ -2,16 +2,17 @@
 use strict;
 use Scripts;
 
-my $DataPath = '/var/opt/cprocsp/tmp/';
+my $DataPath = "/var/opt/cprocsp/tmp/";
+my $DsrfPath = "/var/opt/cprocsp/dsrf";
+my $CproPath = "/opt/cprocsp";
 
-sub DisableInstallCertWindow($);
-
+my $arch_suffix = $ENV{'CPRO_SUFFIX'};
+my $cpconfig = $CproPath . "/sbin/" . $arch_suffix . "/cpconfig";
+my $cryptcp = $CproPath . "/bin/" . $arch_suffix . "/cryptcp";
+my $csptest = $CproPath . "/bin/" . $arch_suffix . "/csptest";
+my $certmgr = $CproPath . "/bin/" . $arch_suffix . "/certmgr";
 #-----------------------------------------------------------------------------
 {
-
-    my $cryptcp = '/opt/cprocsp/bin/amd64/cryptcp';
-    my $csptest = '/opt/cprocsp/bin/amd64/csptest';
-    
     #RunCmd("DelCert", $cryptcp . ' -delcert -m -yes -dn CN= -nochain');
     RunCmd("DelCert", $cryptcp . ' -delcert -u -yes -dn CN= -nochain');
     RunCmd("DelCert", $csptest . ' -notime -noerrorwait -keyset -silent -deletekeyset -pattern "" -verifyco -provtype 81');
@@ -33,24 +34,24 @@ sub DisableInstallCertWindow($);
     RunCmd('MakeCertAndKeyRSA', 'openssl rsa -in ' . $DataPath . 'stunnelclnRSA.key -out ' . $DataPath . 'stunnelclnRSA.key');
     
     #make GOST certs
-    RunCmd('MakeDSRF', "/opt/cprocsp/sbin/amd64/cpconfig -hardware rndm -add cpsd -name 'cpsd rng' -level 2 ");
-    RunCmd('MakeDSRF', "/opt/cprocsp/sbin/amd64/cpconfig -hardware rndm -configure cpsd -add string /db1/kis_1 /var/opt/cprocsp/dsrf/db1/kis_1");
-    RunCmd('MakeDSRF', "/opt/cprocsp/sbin/amd64/cpconfig -hardware rndm -configure cpsd -add string /db2/kis_1 /var/opt/cprocsp/dsrf/db2/kis_1");
-    RunCmd('MakeDSRF', "cp ./mydsrf /var/opt/cprocsp/dsrf/db1/kis_1");
-    RunCmd('MakeDSRF', "cp ./mydsrf /var/opt/cprocsp/dsrf/db2/kis_1");
+    RunCmd('MakeDSRF', $cpconfig . " -hardware rndm -add cpsd -name 'cpsd rng' -level 2 ");
+    RunCmd('MakeDSRF', $cpconfig . " -hardware rndm -configure cpsd -add string /db1/kis_1 " . $DsrfPath . "/db1/kis_1");
+    RunCmd('MakeDSRF', $cpconfig . " -hardware rndm -configure cpsd -add string /db2/kis_1 " . $DsrfPath . "/db2/kis_1");
+    RunCmd('MakeDSRF', "cp ./mydsrf " . $DsrfPath . "/db1/kis_1");
+    RunCmd('MakeDSRF', "cp ./mydsrf " . $DsrfPath . "/db2/kis_1");
     RunCmd('Restart csp-daemon', "/etc/init.d/cprocsp restart");
     
     #new certs
-    RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -ku -du -ex -ca http://cryptopro.ru/certsrv -enable-install-root");
-    RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 81 -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -ku -du -both -ca http://cryptopro.ru/certsrv -enable-install-root");
+    RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -ku -du -ex -ca http://cryptopro.ru/certsrv -enable-install-root");
+    RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -ku -du -both -ca http://cryptopro.ru/certsrv -enable-install-root");
  
     #old certs (могут быть ошибки из-за упоминания о старых сертификатах)
     #RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -ku -du -ex -ca http://cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
     #RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -ku -du -both -ca http://cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
     
     #export certs
-    RunCmd('Safe cert in '.$DataPath, "/opt/cprocsp/bin/amd64/certmgr -export -cert -dest ".$DataPath."stunnelsrv.cer -dn CN=127.0.0.1");
-    RunCmd('Safe cert in '.$DataPath, "/opt/cprocsp/bin/amd64/certmgr -export -cert -dest ".$DataPath."stunnelcln.cer -dn CN=cln512e");
+    RunCmd('Safe cert in '.$DataPath, $certmgr . " -export -cert -dest " . $DataPath . "stunnelsrv.cer -dn CN=127.0.0.1");
+    RunCmd('Safe cert in '.$DataPath, $certmgr . " -export -cert -dest " . $DataPath . "stunnelcln.cer -dn CN=cln512e");
 
     RunCmd('Make cert PEM format in '.$DataPath, "openssl x509 -inform DER -in " . $DataPath . "stunnelcln.cer -out " . $DataPath . "stunnelcln.pem");
     RunCmd('Make cert PEM format in '.$DataPath, "openssl x509 -inform DER -in " . $DataPath . "stunnelsrv.cer -out " . $DataPath . "stunnelsrv.pem");
