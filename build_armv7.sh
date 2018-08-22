@@ -7,7 +7,7 @@ VERSION=jessie
 CHROOT_ARCH=armhf
 ARCH=arm
 #TRAVIS_BUILD_DIR=/home/full/Desktop/git-full/ANOTHER_GIT/stunnel
-
+#MSSPI=yes
 # Debian package dependencies for the host
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
@@ -87,6 +87,12 @@ else
     echo "Running inside chrooted environment"
 
     . ./envvars.sh
+
+    # Set locale (otherwise have unreadable logs)
+    echo "LC_ALL=en_US.UTF-8" >> /etc/environment
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    echo "LANG=en_US.UTF-8" > /etc/locale.conf
+    locale-gen en_US.UTF-8
 
     if [ "$MSSPI" = "yes" ]; then
         sudo linux-armhf_deb/install.sh $CSPMODE

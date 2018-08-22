@@ -4,24 +4,24 @@ use Scripts;
 print "\n\n--------MAKE DEFAULT CERTS--------\n";
 print "----------------------------------\n\n";
 
-print "sudo perl make_default_certs.pl:\n\n";
-system("sudo perl make_default_certs.pl");
+print "perl make_default_certs.pl:\n\n";
+system("perl make_default_certs.pl");
 
 sleep(1);
 
 print "\n\n--------START STUNNEL-------------\n";
 print "----------------------------------\n\n";
 
-print "sudo perl stunnel.pl local:\n\n";
-system("sudo perl stunnel.pl local");
+print "perl stunnel.pl local:\n\n";
+system("perl stunnel.pl local");
 
 sleep(1);
 
 print "\n\n--------START CLIENT--------------\n";
 print "----------------------------------\n\n";
 
-print "sudo perl stunnel_client.pl local > client_log &:\n\n";
-system("sudo perl stunnel_client.pl local > client_log &");
+print "perl stunnel_client.pl local > client_log &:\n\n";
+system("perl stunnel_client.pl local > client_log &");
 
 
 sleep(1);
@@ -29,8 +29,8 @@ sleep(1);
 print "\n\n--------START SERVER--------------\n";
 print "----------------------------------\n\n";
 
-print "sudo perl stunnel_server.pl:\n\n";
-system("sudo perl stunnel_server.pl");
+print "perl stunnel_server.pl:\n\n";
+system("perl stunnel_server.pl");
 
 sleep(3);
 
