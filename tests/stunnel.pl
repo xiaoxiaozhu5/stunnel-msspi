@@ -3,6 +3,7 @@
 use strict;
 use Scripts;
 
+sub _RunCmd($$);
 sub KillStunnels();
 sub PrepareAndRunConf($$$$);
 
@@ -196,23 +197,33 @@ sub PrepareAndRunConf($$$$) {
     print FL $conf;
     close(FL);
 
-    RunCmd("Config", "cat " . $conf_file);
-    RunCmd("Start stunnel", $cmd_line);
+    _RunCmd("Config", "cat " . $conf_file);
+    _RunCmd("Start stunnel", $cmd_line);
 }
 
 #-----------------------------------------------------------------------------
 sub KillStunnels() {
 
     my $cmd = "ps -A -o pid -o args | grep src/stunnel | grep -v grep || echo ok";
-    #RunCmd("Kill stunnel process", $cmd);
+    #_RunCmd("Kill stunnel process", $cmd);
     my $res = `$cmd`;
     Parser($res);
     if (scalar @ParserResult > 0) {
-        RunCmd("Kill stunnel", "/bin/kill -s KILL " . join(' ', @ParserResult));
+        _RunCmd("Kill stunnel", "/bin/kill -s KILL " . join(' ', @ParserResult));
         sleep(2);
     }
-    RunCmd("Remove logs", "rm " . $DataPath . 'stunnel_serv.log') if (-f $DataPath . 'stunnel_serv.log');
-    RunCmd("Remove logs", "rm " . $DataPath . 'stunnel_cli.log') if (-f $DataPath . 'stunnel_cli.log');
+    _RunCmd("Remove logs", "rm " . $DataPath . 'stunnel_serv.log') if (-f $DataPath . 'stunnel_serv.log');
+    _RunCmd("Remove logs", "rm " . $DataPath . 'stunnel_cli.log') if (-f $DataPath . 'stunnel_cli.log');
+}
+
+#-----------------------------------------------------------------------------
+sub _RunCmd($$)
+{
+    my $rv = RunCmd(shift, shift);
+    if ($rv != 0)
+    {
+        exit $rv;
+    }
 }
 
 #-----------------------------------------------------------------------------
