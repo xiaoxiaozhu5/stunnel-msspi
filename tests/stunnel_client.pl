@@ -194,6 +194,7 @@ sub ConnectToThisServer($$)
     	}
     }
     print "Timeout when connecting $host on port $port : " . $! . "\n" if ($i == $timeout_cycle);
+    exit 1;
 }
 
 

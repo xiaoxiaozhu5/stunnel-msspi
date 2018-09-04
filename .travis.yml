@@ -41,7 +41,7 @@ addons:
 
 install:
 - if [ "$MSSPI" = "yes" ]; then
-      wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp40r3/${ARCH_DIST}_deb.tgz &&
+      wget https://$ACCOUNT@update.cryptopro.ru/support/stunnel/dist/csp50/${ARCH_DIST}_deb.tgz &&
       tar -xvf ${ARCH_DIST}_deb.tgz;
   fi
 before_script:
@@ -50,9 +50,7 @@ before_script:
 script:
   - if [ "$ARCH" = "amd64" ]; then
       bash -ex ./build_amd64.sh;
-    fi
-    
-    if [ "$ARCH" = "armv7" ]; then
+    elif [ "$ARCH" = "armv7" ]; then
       bash -ex ./build_armv7.sh;
     fi
 

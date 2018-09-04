@@ -19,6 +19,5 @@ sub RunCmd {
     return $res;
 }
 
-
-return1;
+return 1;
 END { }

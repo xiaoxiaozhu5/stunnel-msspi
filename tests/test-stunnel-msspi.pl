@@ -5,7 +5,11 @@ print "\n\n--------MAKE DEFAULT CERTS--------\n";
 print "----------------------------------\n\n";
 
 print "perl make_default_certs.pl:\n\n";
-system("perl make_default_certs.pl");
+my $rc = system("perl make_default_certs.pl");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 sleep(1);
 
@@ -13,7 +17,11 @@ print "\n\n--------START STUNNEL-------------\n";
 print "----------------------------------\n\n";
 
 print "perl stunnel.pl local:\n\n";
-system("perl stunnel.pl local");
+$rc = system("perl stunnel.pl local");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 sleep(1);
 
@@ -21,8 +29,11 @@ print "\n\n--------START CLIENT--------------\n";
 print "----------------------------------\n\n";
 
 print "perl stunnel_client.pl local > client_log &:\n\n";
-system("perl stunnel_client.pl local > client_log &");
-
+$rc = system("perl stunnel_client.pl local > client_log &");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 sleep(1);
 
@@ -30,7 +41,11 @@ print "\n\n--------START SERVER--------------\n";
 print "----------------------------------\n\n";
 
 print "perl stunnel_server.pl:\n\n";
-system("perl stunnel_server.pl");
+$rc = system("perl stunnel_server.pl");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 sleep(3);
 
@@ -38,16 +53,29 @@ print "\n\n--------CLIENT LOG----------------\n";
 print "----------------------------------\n\n";
 
 print "cat client_log:\n\n";
-system("cat client_log");
+$rc = system("cat client_log");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 print "\n\n--------CLIENT STUNNEL LOG--------\n";
 print "----------------------------------\n\n";
 
 print "cat /var/opt/cprocsp/tmp/stunnel_cli.log:\n\n";
-system("cat /var/opt/cprocsp/tmp/stunnel_cli.log");
+$rc = system("cat /var/opt/cprocsp/tmp/stunnel_cli.log");
+if ($rc != 0)
+{
+    exit 1;
+}
 
 print "\n\n--------SERVER STUNNEL LOG--------\n";
 print "----------------------------------\n\n";
 
 print "cat /var/opt/cprocsp/tmp/stunnel_serv.log:\n\n";
-system("cat /var/opt/cprocsp/tmp/stunnel_serv.log");
+$rc = system("cat /var/opt/cprocsp/tmp/stunnel_serv.log");
+if ($rc != 0)
+{
+    exit 1;
+}
+
