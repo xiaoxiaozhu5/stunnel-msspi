@@ -5,7 +5,7 @@ chmod a+x envvars.sh
 
 if [ "$MSSPI" = "yes" ]; then
     cd ./linux-amd64_deb
-    ./install.sh $CSPMODE || exit 1
+    sudo ./install.sh $CSPMODE || exit 1
     cd ../src/msspi/build_linux
     make || exit 1
     cd ../../.. ;
@@ -25,7 +25,7 @@ else
     if [ "$MSSPI" = "yes" ]; then 
         mv ./src/stunnel ./src/stunnel-msspi
         cd tests
-        perl test-stunnel-msspi.pl || exit 1
+        sudo perl test-stunnel-msspi.pl || exit 1
         cd ../src
         tar -cvzf ${TRAVIS_TAG}_linux-amd64_deb.tar.gz stunnel-msspi
         cd ..;
