@@ -82,7 +82,7 @@ sub _RunCmd($$)
     my $rv = RunCmd(shift, shift);
     if ($rv != 0)
     {
-        exit $rv;
+        die $rv;
     }
 }
 
