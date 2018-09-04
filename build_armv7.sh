@@ -100,7 +100,7 @@ else
 
     if [ "$MSSPI" = "yes" ]; then
         cd ./linux-armhf_deb
-        ./install.sh $CSPMODE || exit 1
+        bash -x ./install.sh $CSPMODE || exit 1
 
         # Install dsrf and rndm0 
         dpkg -i ./lsb-cprocsp-devel_5.0.11219-7_all.deb || exit 1
