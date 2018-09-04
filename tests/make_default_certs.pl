@@ -59,7 +59,7 @@ my $certmgr = $CproPath . "/bin/" . $arch_suffix . "/certmgr";
         # работаем в другим dsrf, который должен быть установлен
         _RunCmd('DisableDsrf', $cpconfig . " -hardware rndm -del cpsd");
     }
-    _RunCmd('Restart csp-daemon', "/etc/init.d/cprocsp restart");
+    #_RunCmd('Restart csp-daemon', "/etc/init.d/cprocsp restart");
     
     #new certs
     _RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -km -dm -ex -ca http://cryptopro.ru/certsrv -enable-install-root");
