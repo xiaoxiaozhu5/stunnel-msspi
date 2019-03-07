@@ -960,6 +960,8 @@ NOEXPORT void transfer(CLI *c) {
 
     c->sock_ptr=c->ssl_ptr=0;
 
+    int skip_poll = SSL_pending( c->ssl );
+
     do { /* main loop of client data transfer */
         /****************************** initialize *_wants_* */
         read_wants_read|=!(SSL_get_shutdown(c->ssl)&SSL_RECEIVED_SHUTDOWN)
@@ -969,6 +971,8 @@ NOEXPORT void transfer(CLI *c) {
 
         /****************************** setup c->fds structure */
         s_poll_init(c->fds); /* initialize the structure */
+        if( !skip_poll )
+        {
         /* for plain socket open data strem = open file descriptor */
         /* make sure to add each open socket to receive exceptions! */
         if(sock_open_rd) /* only poll if the read file descriptor is open */
@@ -1010,6 +1014,9 @@ NOEXPORT void transfer(CLI *c) {
                 return; /* OK */
             }
         }
+        }
+
+        skip_poll = 0;
 
         /****************************** retrieve results from c->fds */
         sock_can_rd=s_poll_canread(c->fds, c->sock_rfd->fd);
