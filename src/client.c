@@ -677,6 +677,37 @@ NOEXPORT void ssl_start(CLI *c) {
             s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", c->opt->cert, c->opt->pin ? c->opt->pin : "" );
             throw_exception( c, 1 );
         }
+        if( c->opt->mapoid )
+        {
+            const char * cert = NULL;
+            int len = 0;
+
+            if( !msspi_get_mycert( c->msh, &cert, &len ) )
+            {
+                s_log( LOG_ERR, "mapoid: msspi_get_mycert failed (cert = \"%s\")", c->opt->cert );
+                throw_exception( c, 1 );
+            }
+
+            if( NULL == ( c->moid = mapoid_open() ) || !mapoid_set_myoid( c->moid, cert, len ) )
+            {
+                s_log( LOG_ERR, "mapoid: mapoid_set_myoid failed (cert = \"%s\")", c->opt->cert );
+                throw_exception( c, 1 );
+            }
+
+            if( !mapoid_set_mapoid( c->moid, c->opt->mapoid ) )
+            {
+                s_log( LOG_ERR, "mapoid: mapoid_set_mapoid failed (cert = \"%s\")", c->opt->cert );
+                throw_exception( c, 1 );
+            }
+
+            if( !mapoid_selfcheck( c->moid, (char)c->opt->option.client ) )
+            {
+                s_log( LOG_ERR, "mapoid: mapoid_selfcheck failed (cert = \"%s\")", c->opt->cert );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "mapoid: selfcheck OK" );
+        }
     }
 #endif
 
@@ -829,6 +860,27 @@ NOEXPORT void ssl_start(CLI *c) {
             }
 
             s_log( LOG_INFO, "msspi: verifypeer OK" );
+        }
+
+        if( c->opt->mapoid )
+        {
+            const char * certs[64] = { NULL };
+            int lens[64] = { 0 };
+            size_t count = 64;
+
+            if( !msspi_get_peercerts( c->msh, (const char **)&certs, (int *)&lens, &count ) || count == 0 )
+            {
+                s_log( LOG_ERR, "mapoid: msspi_get_peercerts failed" );
+                throw_exception( c, 1 );
+            }
+
+            if( !mapoid_verifypeer( c->moid, certs[0], lens[0] ) )
+            {
+                s_log( LOG_ERR, "mapoid: mapoid_verifypeer failed" );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "mapoid: verifypeer OK" );
         }
 
         return;

@@ -118,7 +118,10 @@ else
         /opt/cprocsp/sbin/arm/cpconfig -hardware rndm -del cpsd
         cd ../src/msspi/build_linux
         make || exit 1
-        cd ../../.. ;
+        cd ../../..
+        cd src/mapoid
+        make || exit 1
+        cd ../..;
     fi
 
     autoreconf -fvi && touch src/dhparam.c
