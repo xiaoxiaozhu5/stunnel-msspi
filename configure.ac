@@ -306,6 +306,8 @@ AC_ARG_ENABLE(msspi,
                  case "$host_cpu" in
                     arm*) LIBS="$LIBS -L/opt/cprocsp/lib/arm"
                            ;;
+                    aarch64) LIBS="$LIBS -L/opt/cprocsp/lib/aarch64"
+                           ;;
                     amd64|x86_64) LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
                            ;;
                     *)     LIBS="$LIBS -L/opt/cprocsp/lib/amd64"

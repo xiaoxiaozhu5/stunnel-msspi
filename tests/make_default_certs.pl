@@ -54,7 +54,7 @@ my $certmgr = $CproPath . "/bin/" . $arch_suffix . "/certmgr";
     _RunCmd('MakeDSRF', $cpconfig . " -hardware rndm -configure cpsd -add string /db2/kis_1 " . $DsrfPath . "/db2/kis_1");
     _RunCmd('MakeDSRF', "cp ./mydsrf " . $DsrfPath . "/db1/kis_1");
     _RunCmd('MakeDSRF', "cp ./mydsrf " . $DsrfPath . "/db2/kis_1");
-    if ($arch_suffix eq "arm")
+    if ($arch_suffix eq "arm" || $arch_suffix eq "aarch64")
     {
         # работаем в другим dsrf, который должен быть установлен
         _RunCmd('DisableDsrf', $cpconfig . " -hardware rndm -del cpsd");

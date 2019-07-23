@@ -23,6 +23,7 @@ env:
   - secure: twdfThD5M6bIeGTGiS7vsUUtYpUOHobh13n/s0Q1aiSbAgZ9WMrXZ+b0UJzuB12NrqT64IlfR8qdv023Arf+bMtVuiK1GfF8AGk2ntIFE7deF/D4Ba8JzKIAL/rRB3ensEJXlXIdxoGVMr5j1oEljl5qsAJLay0cQZfAZBN+1hxZ2ONGbuejPRTjLUxPtdl3oIt1VR4qZG/GOONc3lXPgrvNQvwuVfpHZmp+raTyuQgm4l00mgEbYNm9zbSbRYYAA1sQQBSt0QisUa4SJ5e47/GBVMnAOOwo3huAxex1zQ+8FJVrWOc/1E7X8cL5EYxNM5CqSa3Yc3q3lOWtSuVUvDZ0K9G2VpkB5oWGYDnqZLxbOA70+6wjRVIFMJ56dG9pEL9ofyPtDDQOO34hXso1WIa1oh41520xDCprB/g0BMwJrZQJ3mui5j7Kub5HPujq/lsas7CUEQoaOILaFGerLXnh3J+3JwYN83cPA6av4RSouFfH6X0GBnv6ZGCWFYBOqXBWNrKGIFFzJ/AOxbjB82jbeOD2tsB3vY4md9lcSBXpoS7uhbKrBw4JWMSm9sR2sDudsM2fZXh155Uv8GHcsChPoibkw/71ZSm/y9z6qGAwmaYz3bCX74cN9YhSGIG1UqMS4BbWnjALaQajqSSAtIF8qnwnuTEFgVmsq2+skBQ=
   matrix:
   - ARCH='armv7' ARCH_DIST='linux-armhf' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
+  - ARCH='aarch64' ARCH_DIST='linux-arm64' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
   - ARCH='amd64' ARCH_DIST='linux-amd64' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
   - ARCH='amd64' CONFIGURE_OPTIONS='--with-threads=pthread'
   - ARCH='amd64' CONFIGURE_OPTIONS='--with-threads=fork'
@@ -52,6 +53,8 @@ script:
       bash -ex ./build_amd64.sh;
     elif [ "$ARCH" = "armv7" ]; then
       bash -ex ./build_armv7.sh;
+    elif [ "$ARCH" = "aarch64" ]; then
+      bash -ex ./build_arm64.sh;
     fi
 
 after_success:
