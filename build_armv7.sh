@@ -93,7 +93,7 @@ else
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
     echo "LANG=en_US.UTF-8" > /etc/locale.conf
     locale-gen en_US.UTF-8
-    dpkg-reconfigure --frontend=noninteractive locales
+    localedef -i en_US -f UTF-8 en_US.UTF-8
 
     # Mount for 'ps aux'
     mount proc /proc -t proc
@@ -113,7 +113,7 @@ else
         sed -i '12i\"DLL"="librdrrndm0.so"\' /etc/opt/cprocsp/config.ini
         sed -i '13i\[Random\rndm0\default]\' /etc/opt/cprocsp/config.ini
         sed -i '14i\Level = 1\' /etc/opt/cprocsp/config.ini
-        sed -i '237i\"librdrrndm0.so" = "/opt/cprocsp/lib/arm/librdrrndm0.so.4.0.5"\' /etc/opt/cprocsp/config.ini
+        sed -i '270i\"librdrrndm0.so" = "/opt/cprocsp/lib/arm/librdrrndm0.so.4.0.5"\' /etc/opt/cprocsp/config.ini
         cd -
         /opt/cprocsp/sbin/arm/cpconfig -hardware rndm -del cpsd
         cd ../src/msspi/build_linux
