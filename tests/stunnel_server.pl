@@ -71,12 +71,14 @@ my $Time_Hires_enable;
 		my $msg_suffix = "\n" . $srv_conf . "\n" . $srv_log;
 		if ($body =~ m/verify\s+ok/i) {
 			print "Successfull authentication:" . $msg_suffix . "\n";
+                        exit 0;
 		}
 		else {
 			RunCmd("Cat", 'cat ' . $srv_log);
 			print "Authentication marker not found:" . $msg_suffix . "\n";
 		}
 	}
+        exit 1;
 }
 
 

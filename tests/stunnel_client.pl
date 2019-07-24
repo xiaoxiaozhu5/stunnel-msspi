@@ -75,13 +75,11 @@ my $cert_CN_value;
                         exit 0;
 		}
 		else {
-			RunCmd("cat", 'cat ' . $cln_log);
 			print "Authentication marker not found:" . $msg_suffix . "\n";
 		}
 	}
-	open my $hf, '>', ".is_error";
-	close $fh;
-	exit 1;
+	open (my $FL, '>', ".is_error");
+	close $FL;
 }
 
 
