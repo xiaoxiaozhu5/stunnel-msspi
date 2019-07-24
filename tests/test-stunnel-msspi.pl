@@ -79,3 +79,5 @@ if ($rc != 0)
     die 1;
 }
 
+#  Check if stunnel_client.pl found error
+die 1 if -e ".is_error";
