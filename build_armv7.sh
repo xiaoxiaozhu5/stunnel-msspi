@@ -103,7 +103,7 @@ else
         bash -x ./install.sh $CSPMODE || exit 1
 
         # Install dsrf and rndm0 
-        dpkg -i ./lsb-cprocsp-devel_5.0.11219-7_all.deb || exit 1
+        dpkg -i ./lsb-cprocsp-devel_*.deb || exit 1
         eval `/opt/cprocsp/src/samples/setenv.sh --32` || exit 1
         cd /opt/cprocsp/src/rdk/rndm0
         AWK=awk make || exit 1
