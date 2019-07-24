@@ -40,12 +40,23 @@
 
 #include "common.h"
 
+#if defined(USE_PTHREAD) || defined(USE_WIN32)
+#define USE_OS_THREADS
+#endif
+
 /**************************************** forward declarations */
 
 typedef struct tls_data_struct TLS_DATA;
 typedef struct sock_opt_struct SOCK_OPT;
 
 /**************************************** data structures */
+
+#ifdef USE_PTHREAD
+    typedef pthread_t THREAD_ID;
+#endif
+#ifdef USE_WIN32
+    typedef HANDLE THREAD_ID;
+#endif
 
 #if defined (USE_WIN32)
 #define ICON_IMAGE HICON
@@ -175,6 +186,13 @@ typedef struct psk_table_struct {
 } PSK_TABLE;
 #endif /* !defined(OPENSSL_NO_PSK) */
 
+#if OPENSSL_VERSION_NUMBER>=0x10000000L
+typedef struct ticket_key_struct {
+    unsigned char *key_val;
+    int key_len;
+} TICKET_KEY;
+#endif /* OpenSSL 1.0.0 or later */
+
 typedef struct service_options_struct {
     struct service_options_struct *next;   /* next node in the services list */
     SSL_CTX *ctx;                                            /*  TLS context */
@@ -250,6 +268,10 @@ typedef struct service_options_struct {
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *engine;                        /* engine to read the private key */
 #endif /* !defined(OPENSSL_NO_ENGINE) */
+#if OPENSSL_VERSION_NUMBER>=0x10000000L
+    TICKET_KEY *ticket_key;              /* key for handling session tickets */
+    TICKET_KEY *ticket_mac;            /* key for protecting session tickets */
+#endif /* OpenSSL 1.0.0 or later */
 
         /* service-specific data for client.c */
     char *exec_name;                          /* program name for local mode */
@@ -374,6 +396,7 @@ typedef struct {
     unsigned allocated;
 #endif
 #endif
+    int main_thread;
 } s_poll_set;
 
 typedef struct disk_file {
@@ -398,7 +421,7 @@ typedef enum {
     RENEG_DETECTED /* renegotiation detected */
 } RENEG_STATE;
 
-typedef struct {
+typedef struct client_data_struct {
 #ifdef MSSPISSL
     MSSPI_HANDLE msh;
     BIO * rbio;
@@ -409,6 +432,13 @@ typedef struct {
     SSL *ssl;                                              /* TLS connection */
     SERVICE_OPTIONS *opt;
     TLS_DATA *tls;
+
+#ifdef USE_OS_THREADS
+    THREAD_ID thread_id;
+#endif
+#ifndef USE_FORK
+    struct client_data_struct *thread_prev, *thread_next;
+#endif
 
     SOCKADDR_UNION peer_addr;                                /* peer address */
     socklen_t peer_addr_len;
@@ -443,6 +473,8 @@ typedef struct {
 extern int max_clients;
 extern int num_clients;
 #endif
+extern SOCKET signal_pipe[2];
+extern SOCKET terminate_pipe[2];
 
 void main_init(void);
 int main_configure(char *, char *);
@@ -515,6 +547,10 @@ DH *get_dh2048(void);
 
 /**************************************** prototypes for cron.c */
 
+#ifdef USE_OS_THREADS
+extern THREAD_ID cron_thread_id;
+#endif
+
 int cron_init(void);
 
 /**************************************** prototypes for ssl.c */
@@ -552,7 +588,7 @@ char *X509_NAME2text(X509_NAME *);
 
 s_poll_set *s_poll_alloc(void);
 void s_poll_free(s_poll_set *);
-void s_poll_init(s_poll_set *);
+void s_poll_init(s_poll_set *, int);
 void s_poll_add(s_poll_set *, SOCKET, int, int);
 void s_poll_remove(s_poll_set *, SOCKET);
 int s_poll_canread(s_poll_set *, SOCKET);
@@ -562,15 +598,18 @@ int s_poll_rdhup(s_poll_set *, SOCKET);
 int s_poll_err(s_poll_set *, SOCKET);
 int s_poll_wait(s_poll_set *, int, int);
 void s_poll_dump(s_poll_set *, int);
+void s_poll_sleep(int, int);
 
 #ifdef USE_WIN32
-#define SIGNAL_RELOAD_CONFIG    1
-#define SIGNAL_REOPEN_LOG       2
-#define SIGNAL_TERMINATE        3
+#define SIGNAL_TERMINATE        1
+#define SIGNAL_RELOAD_CONFIG    2
+#define SIGNAL_REOPEN_LOG       3
+#define SIGNAL_CONNECTIONS      4
 #else
+#define SIGNAL_TERMINATE        SIGTERM
 #define SIGNAL_RELOAD_CONFIG    SIGHUP
 #define SIGNAL_REOPEN_LOG       SIGUSR1
-#define SIGNAL_TERMINATE        SIGTERM
+#define SIGNAL_CONNECTIONS      SIGUSR2
 #endif
 
 int socket_options_set(SERVICE_OPTIONS *, SOCKET, int);
@@ -585,8 +624,9 @@ unsigned __stdcall
 #else
 void *
 #endif
-client_thread(void *);
+    client_thread(void *);
 void client_main(CLI *);
+void client_free(CLI *);
 void throw_exception(CLI *, int) NORETURN;
 
 /**************************************** prototypes for network.c */
@@ -673,8 +713,8 @@ int getnameinfo(const struct sockaddr *, socklen_t,
 
 /**************************************** prototypes for sthreads.c */
 
-#if defined(USE_PTHREAD) || defined(USE_WIN32)
-#define USE_OS_THREADS
+#ifndef USE_FORK
+extern CLI *thread_head;
 #endif
 
 #if OPENSSL_VERSION_NUMBER<0x10100004L
@@ -704,6 +744,7 @@ typedef void CRYPTO_RWLOCK;
 #endif /* OPENSSL_VERSION_NUMBER<0x10100004L */
 
 typedef enum {
+    LOCK_THREAD_LIST,                       /* sthreads.c */
     LOCK_SESSION, LOCK_ADDR,
     LOCK_CLIENTS, LOCK_SSL,                 /* client.c */
     LOCK_REF,                               /* options.c */
@@ -739,6 +780,7 @@ int sthreads_init(void);
 unsigned long stunnel_process_id(void);
 unsigned long stunnel_thread_id(void);
 int create_client(SOCKET, SOCKET, CLI *);
+
 #ifdef USE_UCONTEXT
 typedef struct CONTEXT_STRUCTURE {
     char *stack; /* CPU stack for this thread */
@@ -753,10 +795,12 @@ typedef struct CONTEXT_STRUCTURE {
 extern CONTEXT *ready_head, *ready_tail;
 extern CONTEXT *waiting_head, *waiting_tail;
 #endif
+
 #ifdef _WIN32_WCE
 long _beginthread(void (*)(void *), int, void *);
 void _endthread(void);
 #endif
+
 #ifdef DEBUG_STACK_SIZE
 void stack_info(size_t, int);
 void ignore_value(void *);
