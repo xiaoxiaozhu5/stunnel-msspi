@@ -72,14 +72,15 @@ my $cert_CN_value;
 		my $msg_suffix = "\n" . $cln_conf . "\n" . $cln_log;
 		if ($body =~ m/verify\s+ok/i) {
 			print "Successfull authentication:" . $msg_suffix . "\n";
+                        exit 0;
 		}
 		else {
 			RunCmd("cat", 'cat ' . $cln_log);
 			print "Authentication marker not found:" . $msg_suffix . "\n";
+			exit 1;
 		}
 	}
-		
-		
+	exit 1;
 }
 
 
