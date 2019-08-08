@@ -528,6 +528,7 @@ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
 #ifdef MSSPISSL
 #include "msspi/src/msspi.h"
+#include "mapoid/mapoid.h"
 #endif
 
 #endif /* defined COMMON_H */
