@@ -120,7 +120,10 @@ else
         /opt/cprocsp/sbin/aarch64/cpconfig -hardware rndm -del cpsd
         cd ../src/msspi/build_linux
         make || exit 1
-        cd ../../.. ;
+        cd ../../..
+        cd src/mapoid
+        make || exit 1
+        cd ../..;
     fi
 
     # TODO: another way for install autoconf-archive?
