@@ -310,6 +310,8 @@ AC_ARG_ENABLE(msspi,
                            ;;
                     amd64|x86_64) LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
                            ;;
+                    mips*) LIBS="$LIBS -L/opt/cprocsp/lib/mipsel"
+                           ;;
                     *)     LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
                            ;;
                  esac
