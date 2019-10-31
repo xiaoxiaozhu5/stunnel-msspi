@@ -40,6 +40,14 @@
 
 #include "common.h"
 
+#ifdef USE_MSSPI
+#define MSSPISSL
+#endif
+
+#ifdef MSSPISSL
+#include "msspi/src/msspi.h"
+#endif
+
 #if defined(USE_PTHREAD) || defined(USE_WIN32)
 #define USE_OS_THREADS
 #endif

@@ -37,7 +37,8 @@
 
 #include "common.h"
 
-#ifdef MSSPISSL
+/* Save openssl functions */
+#ifdef USE_MSSPI
 int SSL_connect_prx( SSL * s ) { return SSL_connect( s ); }
 int SSL_accept_prx( SSL * s ) { return SSL_accept( s ); }
 int SSL_write_prx( SSL * s, const void * buf, int num ) { return SSL_write( s, buf, num ); }
@@ -50,6 +51,11 @@ const char * SSL_get_version_prx( const SSL * s ) { return SSL_get_version( s );
 int SSL_version_prx( const SSL * s ) { return SSL_version( s ); }
 int SSL_pending_prx( const SSL * s ) { return SSL_pending( s ); }
 int SSL_get_error_prx( const SSL *s, int ret_code ) { return SSL_get_error( s, ret_code ); }
+#endif /* USE_MSSPI */
+
+#include "prototypes.h"
+
+#ifdef MSSPISSL
 int SSL_get_error_msspi( MSSPI_HANDLE h )
 {
     int err = msspi_state( h );
@@ -69,6 +75,7 @@ int SSL_get_error_msspi( MSSPI_HANDLE h )
         return SSL_ERROR_WANT_READ;
     return SSL_ERROR_NONE;
 }
+
 int SSL_get_shutdown_msspi( MSSPI_HANDLE h )
 {
     int err = msspi_state( h );
@@ -80,11 +87,7 @@ int SSL_get_shutdown_msspi( MSSPI_HANDLE h )
         return SSL_RECEIVED_SHUTDOWN;
     return 0;
 }
-#endif /* MSSPISSL */
 
-#include "prototypes.h"
-
-#ifdef MSSPISSL
 int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
 {
     int io = BIO_read( c->rbio, buf, len );
