@@ -318,6 +318,8 @@ AC_ARG_ENABLE(msspi,
                  esac
                  LIBS="$LIBS -lcapi10 -lcapi20"
 
+                 LIBS="$LIBS -L./mapoid -lmapoid"
+
                  ;;
             no)  AC_MSG_RESULT([no])
                  ;;

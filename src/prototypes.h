@@ -46,6 +46,7 @@
 
 #ifdef MSSPISSL
 #include "msspi/src/msspi.h"
+#include "mapoid/mapoid.h"
 #endif
 
 #if defined(USE_PTHREAD) || defined(USE_WIN32)
