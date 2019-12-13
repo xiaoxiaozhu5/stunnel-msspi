@@ -433,6 +433,7 @@ typedef enum {
 typedef struct client_data_struct {
 #ifdef MSSPISSL
     MSSPI_HANDLE msh;
+    MAPOID_HANDLE moid;
     BIO * rbio;
     BIO * wbio;
 #endif
