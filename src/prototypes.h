@@ -936,7 +936,7 @@ int SSL_read_prx( SSL * s, void * buf, int num );
 
 void SSL_free_prx( SSL * s );
 #undef SSL_free
-#define SSL_free( s ) { SSL_free_prx( s ); if( c->msh ){ msspi_close( c->msh ); c->msh = NULL; } }
+#define SSL_free( s ) { SSL_free_prx( s ); if( c->msh ){ msspi_close( c->msh ); c->msh = NULL; } if( c->moid ){ mapoid_close( c->moid ); c->moid = NULL; } }
 
 int SSL_shutdown_prx( SSL * s );
 #undef SSL_shutdown
