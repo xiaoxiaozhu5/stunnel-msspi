@@ -18,7 +18,7 @@ if [ "$1" = "in_docker" ]; then
     fi
 
     autoreconf -fvi && touch src/dhparam.c
-    ./configure $CONFIGURE_OPTIONS || exit 1
+    LIBS=-lm ./configure $CONFIGURE_OPTIONS || exit 1
     make || exit 1
 
     if [ -z "$MSSPI" ]; then 
