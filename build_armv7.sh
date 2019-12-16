@@ -136,7 +136,7 @@ else
             cd tests
             perl test-stunnel-msspi.pl || exit 1
             cd ../src
-            tar -cvzf ${TRAVIS_TAG}_linux-armhf_deb.tar.gz stunnel-msspi
+            tar -cvzf ${TRAVIS_TAG}_linux-armhf.tar.gz stunnel-msspi
             cd ..;
         fi
     fi
@@ -144,4 +144,4 @@ else
     exit 0
 fi
 
-mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf_deb.tar.gz ./src/
+mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-armhf.tar.gz ./src/
