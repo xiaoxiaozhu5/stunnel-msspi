@@ -2,6 +2,7 @@
 
 echo "export CPRO_SUFFIX=amd64" > envvars.sh
 chmod a+x envvars.sh
+. ./envvars.sh
 
 if [ "$MSSPI" = "yes" ]; then
     cd ./linux-amd64_deb
@@ -14,12 +15,8 @@ if [ "$MSSPI" = "yes" ]; then
     cd ../..;
 fi
 
-. ./envvars.sh
-
 autoreconf -fvi && touch src/dhparam.c
-
 ./configure $CONFIGURE_OPTIONS || exit 1
-
 make || exit 1
 
 if [ -z "$MSSPI" ]; then 
@@ -30,7 +27,7 @@ else
         cd tests
         sudo perl test-stunnel-msspi.pl || exit 1
         cd ../src
-        tar -cvzf ${TRAVIS_TAG}_linux-amd64_deb.tar.gz stunnel-msspi
+        tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi
         cd ..;
     fi
 fi
