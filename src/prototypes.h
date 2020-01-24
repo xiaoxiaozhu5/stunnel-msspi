@@ -250,7 +250,9 @@ typedef struct service_options_struct {
     char *key;                               /* pem (priv key/cert) filename */
 #ifdef MSSPISSL
     char *pin;                                     /* pin-code for msspi key */
-    char *mapoid;                                  /* mapoid json map of oids */
+    char *mapoid;                                 /* mapoid json map of oids */
+    char *cert2;                                   /* second cert (fallback) */
+    char *pin2;                                  /* pin-code for second cert */
 #endif
     long session_size, session_timeout;
     long unsigned ssl_options_set;

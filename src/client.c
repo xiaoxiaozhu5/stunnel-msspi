@@ -622,6 +622,8 @@ NOEXPORT void ssl_start(CLI *c) {
     c->msh = NULL;
     if( c->opt->option.msspi )
     {
+        size_t j;
+
         c->rbio = SSL_get_rbio( c->ssl );
         c->wbio = SSL_get_wbio( c->ssl );
         c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
@@ -634,90 +636,110 @@ NOEXPORT void ssl_start(CLI *c) {
             msspi_set_hostname( c->msh, c->opt->sni );
         if( c->opt->option.request_cert )
             msspi_set_peerauth( c->msh, 1 );
-        if( c->opt->cert && !msspi_set_mycert( c->msh, c->opt->cert, 0 ) )
+
+        for( j = 0; j < 2; j++ )
         {
-            const long int MAX_SIZE = 1024 * 1024;
-            char is_ok = 0;
-            const char *errstr = "unknown";
-            long int size_file = 0;
-            FILE *cert_file = NULL;
-            char *str_file = NULL;
-            BIO *bio = NULL;
-            X509 *certificate = NULL;
-            unsigned char *buf = NULL;
+            char * cert = j == 0 ? c->opt->cert : c->opt->cert2;
+            char * pin = j == 0 ? c->opt->pin : c->opt->pin2;
 
-            s_log(LOG_INFO, "msspi: try open cert = \"%s\" as file", c->opt->cert);
+            if( cert && !msspi_add_mycert( c->msh, cert, 0 ) )
+            {
+                const long int MAX_SIZE = 1024 * 1024;
+                char is_ok = 0;
+                const char *errstr = "unknown";
+                long int size_file = 0;
+                FILE *cert_file = NULL;
+                char *str_file = NULL;
+                BIO *bio = NULL;
+                X509 *certificate = NULL;
+                unsigned char *buf = NULL;
 
-            for(;;) {
-                if ((cert_file = fopen(c->opt->cert, "rb")) == NULL) {
-                    errstr = "can not open file";
-                    break;
-                }
-                if (fseek(cert_file, 0, SEEK_END) == -1L) {
-                    errstr = "can not read file";
-                    break;
-                }
-                if ((size_file = ftell(cert_file)) > MAX_SIZE) {
-                    errstr = "file too large";
-                    break;
-                }
-                if ((fseek(cert_file, 0, 0)) == -1L) {
-                    errstr = "can not read file";
-                    break;
-                }
-                if ((str_file = (char *)malloc(sizeof(char) * (size_t)size_file)) == NULL) {
-                    errstr = "can not allocate memory for file";
-                    break;
-                }
-                if (fread(str_file, sizeof(char), (size_t)size_file, cert_file) != (unsigned long int)size_file) {
-                    errstr = "can not read file";
-                    break;
-                }
-                /* try DER */
-                if( msspi_set_mycert( c->msh, (char *)str_file, (int)size_file ) )
+                s_log( LOG_INFO, "msspi: try open cert = \"%s\" as file", cert );
+
+                for( ;; )
                 {
-                    is_ok = 1;
-                    break;
-                }
-                /* try PEM */
-                if ((bio = BIO_new(BIO_s_mem())) == NULL) {
-                    errstr = "BIO_new failed";
-                    break;
-                }
-                if (BIO_puts(bio, str_file) <= 0) {
-                    errstr = "BIO_puts failed";
-                    break;
-                }
-                if ((certificate = PEM_read_bio_X509_AUX(bio, NULL, NULL, NULL)) != NULL) {
-                    if ((size_file = i2d_X509(certificate, &buf)) < 0) {
-                        errstr = "i2d_X509 failed";
+                    if( ( cert_file = fopen( cert, "rb" ) ) == NULL )
+                    {
+                        errstr = "can not open file";
                         break;
                     }
-                    if( msspi_set_mycert( c->msh, (char *)buf, (int)size_file ) )
+                    if( fseek( cert_file, 0, SEEK_END ) == -1L )
+                    {
+                        errstr = "can not read file";
+                        break;
+                    }
+                    if( ( size_file = ftell( cert_file ) ) > MAX_SIZE )
+                    {
+                        errstr = "file too large";
+                        break;
+                    }
+                    if( ( fseek( cert_file, 0, 0 ) ) == -1L )
+                    {
+                        errstr = "can not read file";
+                        break;
+                    }
+                    if( ( str_file = (char *)malloc( sizeof( char ) * (size_t)size_file ) ) == NULL )
+                    {
+                        errstr = "can not allocate memory for file";
+                        break;
+                    }
+                    if( fread( str_file, sizeof( char ), (size_t)size_file, cert_file ) != ( unsigned long int )size_file )
+                    {
+                        errstr = "can not read file";
+                        break;
+                    }
+                    /* try DER */
+                    if( msspi_add_mycert( c->msh, (char *)str_file, (int)size_file ) )
                     {
                         is_ok = 1;
                         break;
                     }
+                    /* try PEM */
+                    if( ( bio = BIO_new( BIO_s_mem() ) ) == NULL )
+                    {
+                        errstr = "BIO_new failed";
+                        break;
+                    }
+                    if( BIO_puts( bio, str_file ) <= 0 )
+                    {
+                        errstr = "BIO_puts failed";
+                        break;
+                    }
+                    if( ( certificate = PEM_read_bio_X509_AUX( bio, NULL, NULL, NULL ) ) != NULL )
+                    {
+                        if( ( size_file = i2d_X509( certificate, &buf ) ) < 0 )
+                        {
+                            errstr = "i2d_X509 failed";
+                            break;
+                        }
+                        if( msspi_add_mycert( c->msh, (char *)buf, (int)size_file ) )
+                        {
+                            is_ok = 1;
+                            break;
+                        }
+                    }
+
+                    errstr = "bad file format";
+                    break;
                 }
 
-                errstr = "bad file format";
-                break;
+                if( cert_file ) fclose( cert_file );
+                if( str_file ) free( str_file );
+                if( bio ) BIO_free_all( bio );
+                if( certificate ) X509_free( certificate );
+                if( buf ) OPENSSL_free( buf );
+                if( !is_ok )
+                {
+                    s_log( LOG_ERR, "msspi: add_mycert failed: \"%s\" (cert = \"%s\")", errstr, cert );
+                    throw_exception( c, 1 );
+                }
             }
 
-            if (cert_file) fclose(cert_file);
-            if (str_file) free(str_file);
-            if (bio) BIO_free_all(bio);
-            if (certificate) X509_free(certificate);
-            if (buf) OPENSSL_free(buf);
-            if (!is_ok) {
-                s_log( LOG_ERR, "msspi: set_mycert failed: \"%s\" (cert = \"%s\")",errstr ,c->opt->cert );
+            if( cert && !msspi_set_mycert_options( c->msh, 1, pin, 1 ) )
+            {
+                s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", cert, pin ? pin : "" );
                 throw_exception( c, 1 );
             }
-        }
-        if( c->opt->cert && !msspi_set_mycert_options( c->msh, 1, c->opt->pin, 1 ) )
-        {
-            s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", c->opt->cert, c->opt->pin ? c->opt->pin : "" );
-            throw_exception( c, 1 );
         }
         if( c->opt->mapoid )
         {

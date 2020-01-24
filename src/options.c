@@ -1691,6 +1691,64 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             s_log( LOG_NOTICE, "%-22s = mapoid", "mapoid" );
             break;
     }
+
+    /* pin2 */
+    switch( cmd )
+    {
+        case CMD_SET_DEFAULTS:
+            section->pin2 = NULL;
+            break;
+        case CMD_SET_VALUE:
+            if( strcasecmp( opt, "pin2" ) )
+                break;
+            if( arg[0] )
+                section->pin2 = str_dup_detached( arg );
+            else
+                return "The pin2 is empty";
+            return NULL; /* OK */
+        case CMD_SET_COPY:
+            section->pin2 = str_dup_detached( new_service_options.pin2 );
+            break;
+        case CMD_FREE:
+            str_free( section->pin2 );
+            break;
+        case CMD_INITIALIZE:
+            break;
+        case CMD_PRINT_DEFAULTS:
+            break;
+        case CMD_PRINT_HELP:
+            s_log( LOG_NOTICE, "%-22s = pin2", "pin2" );
+            break;
+    }
+
+    /* cert2 */
+    switch( cmd )
+    {
+        case CMD_SET_DEFAULTS:
+            section->cert2 = NULL;
+            break;
+        case CMD_SET_VALUE:
+            if( strcasecmp( opt, "cert2" ) )
+                break;
+            if( arg[0] )
+                section->cert2 = str_dup_detached( arg );
+            else
+                return "The cert is empty";
+            return NULL; /* OK */
+        case CMD_SET_COPY:
+            section->cert2 = str_dup_detached( new_service_options.cert2 );
+            break;
+        case CMD_FREE:
+            str_free( section->cert2 );
+            break;
+        case CMD_INITIALIZE:
+            break;
+        case CMD_PRINT_DEFAULTS:
+            break;
+        case CMD_PRINT_HELP:
+            s_log( LOG_NOTICE, "%-22s = cert2", "cert2" );
+            break;
+    }
 #endif
 
     /* client */
