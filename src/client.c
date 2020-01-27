@@ -636,6 +636,8 @@ NOEXPORT void ssl_start(CLI *c) {
             msspi_set_hostname( c->msh, c->opt->sni );
         if( c->opt->option.request_cert )
             msspi_set_peerauth( c->msh, 1 );
+        if( c->opt->option.client )
+            msspi_set_client( c->msh );
 
         for( j = 0; j < 2; j++ )
         {
