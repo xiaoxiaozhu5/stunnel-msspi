@@ -437,8 +437,8 @@ typedef struct client_data_struct {
 #ifdef MSSPISSL
     MSSPI_HANDLE msh;
     MAPOID_HANDLE moid;
-    int * rfd;
-    int * wfd;
+    int rfd;
+    int wfd;
 #endif
     jmp_buf *exception_pointer;
 

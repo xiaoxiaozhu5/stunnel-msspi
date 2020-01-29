@@ -60,7 +60,7 @@ int SSL_read_prx( SSL * s, void * buf, int num ) { return 0; }
 void SSL_free_prx( SSL * s ) { return; }
 int SSL_shutdown_prx( SSL * s ) { return 0; }
 void SSL_set_shutdown_prx( SSL * s, int mode ) { return; }
-int SSL_get_shutdown_prx( const SSL * s ) { 0; }
+int SSL_get_shutdown_prx( const SSL * s ) { return 0; }
 const char * SSL_get_version_prx( const SSL * s ) { return NULL; }
 int SSL_version_prx( const SSL * s ) { return 0; }
 int SSL_pending_prx( const SSL * s ) { return 0; }
