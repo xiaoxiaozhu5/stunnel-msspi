@@ -122,7 +122,7 @@ void thread_id_init(void) {
 /**************************************** locking */
 
 /* we only need to initialize locking with OpenSSL older than 1.1.0 */
-#if OPENSSL_VERSION_NUMBER<0x10100004L
+#if NO_OPENSSL_LOCKS
 
 #ifdef USE_PTHREAD
 
@@ -227,11 +227,11 @@ NOEXPORT int s_atomic_add(int *val, int amount, CRYPTO_RWLOCK *lock) {
     return ret;
 }
 
-#endif /* OPENSSL_VERSION_NUMBER<0x10100004L */
+#endif /* NO_OPENSSL_LOCKS */
 
 CRYPTO_RWLOCK *stunnel_locks[STUNNEL_LOCKS];
 
-#if OPENSSL_VERSION_NUMBER<0x10100004L
+#if NO_OPENSSL_LOCKS
 
 #ifdef USE_OS_THREADS
 
@@ -337,7 +337,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock) {
     return 1;
 }
 
-#endif /* OPENSSL_VERSION_NUMBER<0x10100004L */
+#endif /* NO_OPENSSL_LOCKS */
 
 void locking_init(void) {
     size_t i;
