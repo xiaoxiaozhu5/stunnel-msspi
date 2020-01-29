@@ -73,11 +73,12 @@ int SSL_get_error_prx( const SSL *s, int ret_code ) { return 0; }
 #ifdef MSSPISSL
 #ifdef NO_OPENSSLOFF
 #else /* NO_OPENSSLOFF */
-void sslerror( const char * str ) { s_log( LOG_ERR, str ); }
+void sslerror( char * str ) { s_log( LOG_ERR, str ); }
 int RAND_bytes( unsigned char *buf, int num ) { return msspi_random( buf, num ); }
 #define SSL_set_fd( s, fd ) c->rfd = c->wfd = fd
 #define SSL_set_rfd( s, fd ) c->rfd = fd
 #define SSL_set_wfd( s, fd ) c->wfd = fd
+#define SSL_has_pending( s ) msspi_pending( c->msh )
 #endif /* NO_OPENSSLOFF */
 int SSL_get_error_msspi( MSSPI_HANDLE h )
 {
@@ -1872,6 +1873,7 @@ char **env_alloc(CLI *c) {
         }
     }
 
+#ifdef NO_OPENSSLOFF
     if(c->ssl) {
         peer_cert=SSL_get_peer_certificate(c->ssl);
         if(peer_cert) {
@@ -1886,6 +1888,7 @@ char **env_alloc(CLI *c) {
             X509_free(peer_cert);
         }
     }
+#endif /* NO_OPENSSLOFF */
 
     for(p=environ; *p; ++p) {
         env=str_realloc(env, (n+2)*sizeof(char *));

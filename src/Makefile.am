@@ -7,8 +7,8 @@
 
 common_headers = common.h prototypes.h version.h
 common_sources = tls.c str.c file.c client.c log.c options.c protocol.c
-common_sources += network.c resolver.c ssl.c ctx.c verify.c sthreads.c
-common_sources += fd.c dhparam.c cron.c stunnel.c force_enable_cxx.cpp
+common_sources += network.c resolver.c sthreads.c
+common_sources += fd.c stunnel.c force_enable_cxx.cpp
 unix_sources = pty.c libwrap.c ui_unix.c
 shared_sources = env.c
 win32_gui_sources = ui_win_gui.c resources.h resources.rc
@@ -38,7 +38,7 @@ stunnel_CPPFLAGS += -DLIBDIR='"$(pkglibdir)"'
 stunnel_CPPFLAGS += -DCONFDIR='"$(sysconfdir)/stunnel"'
 
 # TLS library
-stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lssl -lcrypto
+stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib
 
 # stunnel3 script
 edit = sed \

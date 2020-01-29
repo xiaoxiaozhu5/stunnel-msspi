@@ -269,6 +269,7 @@ void ui_new_log(const char *line) {
     fprintf(stderr, "%s\n", line);
 }
 
+#ifdef NO_OPENSSLOFF
 /**************************************** ctx callbacks */
 
 int ui_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
@@ -280,5 +281,6 @@ UI_METHOD *UI_stunnel() {
     return UI_OpenSSL();
 }
 #endif
+#endif /* NO_OPENSSLOFF */
 
 /* end of ui_unix.c */
