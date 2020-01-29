@@ -752,7 +752,7 @@ struct CRYPTO_dynlock_value {
     int init_line, read_lock_line, write_lock_line, unlock_line, destroy_line;
 };
 
-typedef struct CRYPTO_dynlock_value CRYPTO_RWLOCK;
+typedef void CRYPTO_RWLOCK;
 
 #else /* USE_OS_THREADS */
 

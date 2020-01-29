@@ -280,7 +280,7 @@ NOEXPORT int s_add_lock_cb(int *num, int amount, int type,
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void) {
     struct CRYPTO_dynlock_value *lock;
 
-    lock=str_alloc_detached(sizeof(CRYPTO_RWLOCK));
+    lock=str_alloc_detached(sizeof(struct CRYPTO_dynlock_value));
     s_lock_init_debug(lock, __FILE__, __LINE__);
     return lock;
 }
