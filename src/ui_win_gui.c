@@ -683,6 +683,8 @@ NOEXPORT LRESULT CALLBACK about_proc(HWND dialog_handle, UINT message,
     return FALSE;
 }
 
+#ifdef NO_OPENSSLOFF
+
 NOEXPORT LRESULT CALLBACK pass_proc(HWND dialog_handle, UINT message,
         WPARAM wParam, LPARAM lParam) {
     LPTSTR titlebar;
@@ -789,6 +791,8 @@ NOEXPORT int pin_cb(UI *ui, UI_STRING *uis) {
     return 1;
 }
 #endif
+
+#endif /* NO_OPENSSLOFF */
 
 /**************************************** log handling */
 

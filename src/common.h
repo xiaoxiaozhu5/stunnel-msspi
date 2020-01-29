@@ -38,6 +38,15 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef NO_OPENSSLOFF
+#else /* NO_OPENSSLOFF */
+#define OPENSSL_NO_ENGINE
+#define OPENSSL_NO_PSK
+#define OPENSSL_NO_ECDH
+#define OPENSSL_NO_DH
+#define OPENSSL_NO_COMP
+#endif /* NO_OPENSSLOFF */
+
 #include "version.h"
 
 /**************************************** common constants */

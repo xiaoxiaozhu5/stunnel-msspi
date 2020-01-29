@@ -109,12 +109,14 @@ NOEXPORT void threadid_func(CRYPTO_THREADID *tid) {
 #endif
 
 void thread_id_init(void) {
+#ifdef NO_OPENSSLOFF
 #if OPENSSL_VERSION_NUMBER>=0x10000000L && OPENSSL_VERSION_NUMBER<0x10100000L
     CRYPTO_THREADID_set_callback(threadid_func);
 #endif
 #if OPENSSL_VERSION_NUMBER<0x10000000L || !defined(OPENSSL_NO_DEPRECATED)
     CRYPTO_set_id_callback(stunnel_thread_id);
 #endif
+#endif /* NO_OPENSSLOFF */
 }
 
 /**************************************** locking */
@@ -339,6 +341,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock) {
 
 void locking_init(void) {
     size_t i;
+#ifdef NO_OPENSSLOFF
 #if defined(USE_OS_THREADS) && OPENSSL_VERSION_NUMBER<0x10100004L
     size_t num;
 
@@ -357,6 +360,7 @@ void locking_init(void) {
     CRYPTO_set_dynlock_lock_callback(s_dynlock_lock_cb);
     CRYPTO_set_dynlock_destroy_callback(s_dynlock_destroy_cb);
 #endif /* defined(USE_OS_THREADS) && OPENSSL_VERSION_NUMBER<0x10100004L */
+#endif /* NO_OPENSSLOFF */
 
     /* initialize stunnel critical sections */
     for(i=0; i<STUNNEL_LOCKS; i++) /* all the mutexes */

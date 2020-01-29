@@ -118,8 +118,10 @@ void main_init() { /* one-time initialization */
 #endif
     /* basic initialization contains essential functions required for logging
      * subsystem to function properly, thus all errors here are fatal */
+#ifdef NO_OPENSSLOFF
     if(ssl_init()) /* initialize TLS library */
         fatal("TLS initialization failed");
+#endif /* NO_OPENSSLOFF */
     if(sthreads_init()) /* initialize critical sections & TLS callbacks */
         fatal("Threads initialization failed");
     options_defaults();
@@ -238,10 +240,12 @@ void main_cleanup() {
         thread_list[i++]=c->thread_id;
         s_log(LOG_DEBUG, "Terminating a thread for [%s]", c->opt->servname);
     }
+#ifdef NO_OPENSSLOFF
     if(cron_thread_id) { /* append cron_thread_id if used */
         thread_list[threads++]=cron_thread_id;
         s_log(LOG_DEBUG, "Terminating the cron thread");
     }
+#endif /* NO_OPENSSLOFF */
     CRYPTO_THREAD_unlock(stunnel_locks[LOCK_THREAD_LIST]);
 
     if(threads) {
@@ -328,10 +332,12 @@ NOEXPORT void status_info(int pid, int status, const char *info) {
 /**************************************** main loop accepting connections */
 
 void daemon_loop(void) {
+#ifdef NO_OPENSSLOFF
     if(cron_init()) { /* initialize periodic events */
         s_log(LOG_CRIT, "Cron initialization failed");
         exit(1);
     }
+#endif /* NO_OPENSSLOFF */
     if(exec_connect_start()) {
         s_log(LOG_CRIT, "Failed to start exec+connect services");
         exit(1);
@@ -480,12 +486,14 @@ void unbind_ports(void) {
             /* FIXME: this won't work with FORK threads */
             opt->option.retry=0;
         }
+#ifdef NO_OPENSSLOFF
         /* purge session cache of the old SSL_CTX object */
         /* this workaround won't be needed anymore after */
         /* delayed deallocation calls SSL_CTX_free()     */
         if(opt->ctx)
             SSL_CTX_flush_sessions(opt->ctx,
                 (long)time(NULL)+opt->session_timeout+1);
+#endif /* NO_OPENSSLOFF */
         s_log(LOG_DEBUG, "Service [%s] closed", opt->servname);
 
         {
@@ -1019,6 +1027,7 @@ NOEXPORT char *signal_name(int signum) {
 
 void stunnel_info(int level) {
     s_log(level, "stunnel " STUNNEL_VERSION " on " HOST " platform");
+#ifdef NO_OPENSSLOFF
     if(strcmp(OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION))) {
         s_log(level, "Compiled with " OPENSSL_VERSION_TEXT);
         s_log(level, "Running  with %s", OpenSSL_version(OPENSSL_VERSION));
@@ -1032,6 +1041,9 @@ void stunnel_info(int level) {
     } else {
         s_log(level, "Compiled/running with " OPENSSL_VERSION_TEXT);
     }
+#else /* NO_OPENSSLOFF */
+    s_log( level, "Compiled without OPENSSL" );
+#endif /* NO_OPENSSLOFF */
 
     s_log(level,
 

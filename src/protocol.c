@@ -89,6 +89,7 @@ char *protocol(CLI *c, SERVICE_OPTIONS *opt, const PHASE phase) {
         return opt->option.client ?
             "The 'proxy' protocol is not supported in the client mode" :
             proxy_server(c, opt, phase);
+#ifdef NO_OPENSSLOFF
     if(!strcasecmp(opt->protocol, "cifs"))
         return opt->option.client ?
             cifs_client(c, opt, phase) :
@@ -117,6 +118,7 @@ char *protocol(CLI *c, SERVICE_OPTIONS *opt, const PHASE phase) {
         return opt->option.client ?
             connect_client(c, opt, phase) :
             connect_server(c, opt, phase);
+#endif /* NO_OPENSSLOFF */
     return "Protocol not supported";
 }
 

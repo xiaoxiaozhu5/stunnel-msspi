@@ -1245,9 +1245,11 @@ NOEXPORT char *parse_global_option(CMD cmd, char *opt, char *arg) {
     case CMD_SET_VALUE:
         return option_not_found;
     case CMD_INITIALIZE:
+#ifdef NO_OPENSSLOFF
         /* FIPS needs to be initialized as early as possible */
         if(ssl_configure(&new_global_options)) /* configure global TLS settings */
             return "Failed to initialize TLS";
+#endif /* NO_OPENSSLOFF */
     case CMD_PRINT_DEFAULTS:
         break;
     case CMD_PRINT_HELP:
@@ -3348,6 +3350,8 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
 
 #else /* OPENSSL_VERSION_NUMBER<0x10100000L */
 
+#ifdef NO_OPENSSLOFF
+
     /* sslVersion */
     switch(cmd) {
     case CMD_SET_DEFAULTS:
@@ -3381,6 +3385,8 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             " TLS method", "sslVersion");
         break;
     }
+
+#endif /* NO_OPENSSLOFF */
 
 #endif /* OPENSSL_VERSION_NUMBER<0x10100000L */
 
@@ -3417,6 +3423,8 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
 #endif
 
 #if OPENSSL_VERSION_NUMBER>=0x10000000L
+
+#ifdef NO_OPENSSLOFF
 
     /* ticketKeySecret */
     switch(cmd) {
@@ -3491,6 +3499,8 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             "ticketMacSecret");
         break;
     }
+
+#endif /* NO_OPENSSLOFF */
 
 #endif /* OpenSSL 1.0.0 or later */
 
@@ -3790,10 +3800,12 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
         break;
     case CMD_FREE:
         str_free(section->chain);
+#ifdef NO_OPENSSLOFF
         if(section->session)
             SSL_SESSION_free(section->session);
         if(section->ctx)
             SSL_CTX_free(section->ctx);
+#endif /* NO_OPENSSLOFF */
         str_free(section->servname);
         if(section==&service_options)
             memset(section, 0, sizeof(SERVICE_OPTIONS));
@@ -3814,6 +3826,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             if(endpoints!=1)
                 return "Inetd mode must define one endpoint";
         }
+#ifdef NO_OPENSSLOFF
 #ifdef SSL_OP_NO_TICKET
         /* disable RFC4507 support introduced in OpenSSL 0.9.8f */
         /* OpenSSL 1.1.1 is required to serialize application data
@@ -3827,6 +3840,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
 #endif /* SSL_OP_NO_TICKET */
         if(context_init(section)) /* initialize TLS context */
             return "Failed to initialize TLS context";
+#endif /* NO_OPENSSLOFF */
         break;
     case CMD_PRINT_DEFAULTS:
         break;
@@ -3946,6 +3960,8 @@ NOEXPORT int str_to_proto_version(const char *name) {
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif /* __GNUC__ */
 
+#ifdef NO_OPENSSLOFF
+
 NOEXPORT char *tls_methods_set(SERVICE_OPTIONS *section, const char *arg) {
     if(!arg) { /* defaults */
         section->client_method=(SSL_METHOD *)SSLv23_client_method();
@@ -4013,6 +4029,8 @@ NOEXPORT char *tls_methods_check(SERVICE_OPTIONS *section) {
 #endif /* USE_FIPS */
     return NULL;
 }
+
+#endif /* NO_OPENSSLOFF */
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
