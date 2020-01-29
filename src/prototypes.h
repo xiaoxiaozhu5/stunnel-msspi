@@ -730,7 +730,13 @@ int getnameinfo(const struct sockaddr *, socklen_t,
 extern CLI *thread_head;
 #endif
 
-#if OPENSSL_VERSION_NUMBER<0x10100004L
+#ifdef NO_OPENSSLOFF
+#define NO_OPENSSL_LOCKS OPENSSL_VERSION_NUMBER<0x10100004L
+#else /* NO_OPENSSLOFF */
+#define NO_OPENSSL_LOCKS 1
+#endif /* NO_OPENSSLOFF */
+
+#if NO_OPENSSL_LOCKS
 
 #ifdef USE_OS_THREADS
 
@@ -754,7 +760,7 @@ typedef void CRYPTO_RWLOCK;
 
 #endif /* USE_OS_THREADS */
 
-#endif /* OPENSSL_VERSION_NUMBER<0x10100004L */
+#endif /* NO_OPENSSL_LOCKS */
 
 typedef enum {
     LOCK_THREAD_LIST,                       /* sthreads.c */
@@ -779,7 +785,7 @@ typedef enum {
 
 extern CRYPTO_RWLOCK *stunnel_locks[STUNNEL_LOCKS];
 
-#if OPENSSL_VERSION_NUMBER<0x10100004L
+#if NO_OPENSSL_LOCKS
 /* Emulate the OpenSSL 1.1 locking API for older OpenSSL versions */
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *);
@@ -787,7 +793,7 @@ int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *);
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *);
 void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *);
 int CRYPTO_atomic_add(int *, int, int *, CRYPTO_RWLOCK *);
-#endif
+#endif /* NO_OPENSSL_LOCKS */
 
 int sthreads_init(void);
 unsigned long stunnel_process_id(void);
