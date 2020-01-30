@@ -192,7 +192,10 @@ int BIO_sock_should_retry( int i )
 
 int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
 {
-    int io = readsocket( c->rfd, buf, len );
+    int io;
+
+    set_last_socket_error( 0 );
+    io = readsocket( c->rfd, buf, len );
 
     if( io > 0 )
         return io;
@@ -205,7 +208,10 @@ int stunnel_msspi_bio_read( CLI * c, void * buf, int len )
 
 int stunnel_msspi_bio_write( CLI * c, const void * buf, int len )
 {
-    int io = writesocket( c->wfd, buf, len );
+    int io;
+
+    set_last_socket_error( 0 );
+    io = writesocket( c->wfd, buf, len );
 
     if( io > 0 )
         return io;
