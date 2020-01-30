@@ -29,10 +29,6 @@ env:
   - ARCH='aarch64' ARCH_DIST='linux-arm64' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
   - ARCH='amd64' ARCH_DIST='linux-amd64' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
   - ARCH='amd64' ARCH_DIST='linux-amd64' BUILD_OS='centos' MSSPI='yes' CONFIGURE_OPTIONS='--with-threads=pthread --enable-msspi' CSPMODE='kc1'
-  - ARCH='amd64' CONFIGURE_OPTIONS='--with-threads=pthread'
-  - ARCH='amd64' CONFIGURE_OPTIONS='--with-threads=fork'
-  - ARCH='amd64' CONFIGURE_OPTIONS='--with-threads=ucontext'
-  - ARCH='amd64' CONFIGURE_OPTIONS='--disable-ipv6 --disable-fips --disable-systemd --disable-libwrap'
 
 addons:
   apt:
