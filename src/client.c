@@ -74,7 +74,7 @@ int SSL_get_error_prx( const SSL *s, int ret_code ) { return 0; }
 #ifdef NO_OPENSSLOFF
 #else /* NO_OPENSSLOFF */
 void sslerror( char * str ) { s_log( LOG_ERR, str ); }
-int RAND_bytes( unsigned char *buf, int num ) { return msspi_random( buf, num ); }
+int RAND_bytes( unsigned char * buf, int num ) { return msspi_random( buf, num, 0 ); }
 #define SSL_set_fd( s, fd ) c->rfd = c->wfd = fd
 #define SSL_set_rfd( s, fd ) c->rfd = fd
 #define SSL_set_wfd( s, fd ) c->wfd = fd
