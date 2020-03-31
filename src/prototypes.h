@@ -253,6 +253,8 @@ typedef struct service_options_struct {
     char *mapoid;                                 /* mapoid json map of oids */
     char *cert2;                                   /* second cert (fallback) */
     char *pin2;                                  /* pin-code for second cert */
+    char *checkSubject;                               /* strcmp cert subject */
+    char *checkIssuer;                                 /* strcmp cert issuer */
 #endif
     long session_size, session_timeout;
     long unsigned ssl_options_set;
@@ -455,6 +457,12 @@ typedef struct client_data_struct {
 
     SOCKADDR_UNION peer_addr;                                /* peer address */
     socklen_t peer_addr_len;
+#ifdef MSSPISSL
+    SOCKADDR_UNION local_addr;                              /* local address */
+    socklen_t local_addr_len;
+    SOCKET exec_fd;
+    int is_exec;
+#endif
     char *accepted_address;    /* textual representation of the peer address */
     SOCKADDR_UNION *bind_addr;               /* address to bind() the socket */
     SOCKADDR_LIST connect_addr;     /* either copied or resolved dynamically */

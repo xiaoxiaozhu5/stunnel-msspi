@@ -461,6 +461,10 @@ NOEXPORT void client_run(CLI *c) {
         /* initialize the client context */
     c->remote_fd.fd=INVALID_SOCKET;
     c->fd=INVALID_SOCKET;
+#ifdef MSSPISSL
+    if( !c->is_exec )
+        c->exec_fd = INVALID_SOCKET;
+#endif
     c->ssl=NULL;
     c->sock_bytes=c->ssl_bytes=0;
     if(c->opt->option.client) {
@@ -517,12 +521,18 @@ NOEXPORT void client_run(CLI *c) {
 #endif
     }
 
-#else /* NO_OPENSSLOFF */
+#endif /* NO_OPENSSLOFF */
 
+#ifdef MSSPISSL
     SSL_set_shutdown( c->ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN );
     SSL_free( c->ssl );
 
-#endif /* NO_OPENSSLOFF */
+    if( c->exec_fd != INVALID_SOCKET )
+    {
+        closesocket( c->exec_fd );
+        c->exec_fd = INVALID_SOCKET;
+    }
+#endif
 
         /* cleanup the remote socket */
     if(c->remote_fd.fd!=INVALID_SOCKET) { /* remote socket initialized */
@@ -592,6 +602,10 @@ NOEXPORT void client_try(CLI *c) {
         protocol(c, c->opt, PROTOCOL_MIDDLE);
         remote_start(c);
     }
+#ifdef MSSPISSL
+    if( c->is_exec )
+        connect_local( c );
+#endif
     protocol(c, c->opt, PROTOCOL_LATE);
     transfer(c);
 }
@@ -606,6 +620,16 @@ NOEXPORT void local_start(CLI *c) {
     if(c->local_rfd.is_socket) {
         memcpy(&c->peer_addr.sa, &addr.sa, (size_t)addr_len);
         c->peer_addr_len=addr_len;
+#ifdef MSSPISSL
+        {
+            addr_len = sizeof( SOCKADDR_UNION );
+            if( !getsockname( c->local_rfd.fd, &addr.sa, &addr_len ) )
+            {
+                memcpy( &c->local_addr.sa, &addr.sa, (size_t)addr_len );
+                c->local_addr_len = addr_len;
+            }
+        }
+#endif
         if(socket_options_set(c->opt, c->local_rfd.fd, 1))
             s_log(LOG_WARNING, "Failed to set local socket options");
     } else {
@@ -625,6 +649,16 @@ NOEXPORT void local_start(CLI *c) {
             if(!c->local_rfd.is_socket) { /* already retrieved */
                 memcpy(&c->peer_addr.sa, &addr.sa, (size_t)addr_len);
                 c->peer_addr_len=addr_len;
+#ifdef MSSPISSL
+                {
+                    addr_len = sizeof( SOCKADDR_UNION );
+                    if( !getsockname( c->local_wfd.fd, &addr.sa, &addr_len ) )
+                    {
+                        memcpy( &c->local_addr.sa, &addr.sa, (size_t)addr_len );
+                        c->local_addr_len = addr_len;
+                    }
+                }
+#endif
             }
             if(socket_options_set(c->opt, c->local_wfd.fd, 1))
                 s_log(LOG_WARNING, "Failed to set local socket options");
@@ -1053,6 +1087,32 @@ NOEXPORT void ssl_start(CLI *c) {
             }
 
             s_log( LOG_INFO, "mapoid: verifypeer OK" );
+        }
+
+        if( c->opt->checkSubject )
+        {
+            const char * subject;
+            size_t len;
+            if( !msspi_get_peernames( c->msh, &subject, &len, NULL, NULL )
+                || strlen( c->opt->checkSubject ) + 1 != len
+                || memcmp( c->opt->checkSubject, subject, len ) )
+            {
+                s_log( LOG_ERR, "msspi: checkIssuer failed (\"%s\" != \"%s\")", c->opt->checkSubject, subject );
+                throw_exception( c, 1 );
+            }
+        }
+
+        if( c->opt->checkIssuer )
+        {
+            const char * issuer;
+            size_t len;
+            if( !msspi_get_peernames( c->msh, NULL, NULL, &issuer, &len )
+                || strlen( c->opt->checkIssuer ) + 1 != len
+                || memcmp( c->opt->checkIssuer, issuer, len ) )
+            {
+                s_log( LOG_ERR, "msspi: checkIssuer failed (\"%s\" != \"%s\")", c->opt->checkIssuer, issuer );
+                throw_exception( c, 1 );
+            }
         }
 
         return;
@@ -1756,14 +1816,101 @@ NOEXPORT int connect_local(CLI *c) { /* spawn local process */
 
 #elif defined(USE_WIN32)
 
+#ifdef MSSPISSL
+char **env_alloc( CLI *c )
+{
+    char **env = NULL, **p;
+    unsigned n = 0; /* (n+2) keeps the list NULL-terminated */
+    char *name, host[40], port[6];
+    X509 *peer_cert;
+
+    if( !getnameinfo( &c->peer_addr.sa, c->peer_addr_len,
+                      host, 40, port, 6, NI_NUMERICHOST | NI_NUMERICSERV ) )
+    {
+        /* just don't set these variables if getnameinfo() fails */
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "REMOTE_HOST=%s", host );
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "REMOTE_PORT=%s", port );
+    }
+
+#ifdef MSSPISSL
+    if( !getnameinfo( &c->local_addr.sa, c->local_addr_len,
+                      host, 40, port, 6, NI_NUMERICHOST | NI_NUMERICSERV ) )
+    {
+        /* just don't set these variables if getnameinfo() fails */
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "LOCAL_HOST=%s", host );
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "LOCAL_PORT=%s", port );
+    }
+
+    if( c->msh )
+    {
+        const char * subject;
+        size_t slen;
+        const char * issuer;
+        size_t ilen;
+        if( msspi_get_peernames( c->msh, &subject, &slen, &issuer, &ilen ) )
+        {
+            env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+            env[n++] = str_printf( "SSL_CLIENT_DN=%s", subject );
+            env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+            env[n++] = str_printf( "SSL_CLIENT_I_DN=%s", issuer );
+        }
+    }
+
+    {
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "SERVICENAME=%s", c->opt->servname );
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "CLIENTMODE=%d", c->opt->option.client );
+    }
+#endif
+
+    for( p = environ; *p; ++p )
+    {
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_dup( *p );
+    }
+
+    return env;
+}
+
+void env_free( char **env )
+{
+    char **p;
+
+    for( p = env; *p; ++p )
+        str_free( *p );
+    str_free( env );
+}
+#endif
+
 NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
     SOCKET fd[2];
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     LPTSTR name, args;
 
+#ifdef MSSPISSL
+if( c->is_exec == 0 )
+{
+#endif
     if(make_sockets(fd))
         throw_exception(c, 1);
+#ifdef MSSPISSL
+    c->exec_fd = fd[1];
+    c->is_exec = 1;
+    return fd[0];
+}
+else
+{
+    fd[0] = INVALID_SOCKET;
+    fd[1] = c->exec_fd;
+    c->exec_fd = INVALID_SOCKET;
+}
+#endif
     memset(&si, 0, sizeof si);
     si.cb=sizeof si;
     si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
@@ -1773,7 +1920,32 @@ NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
 
     name=str2tstr(c->opt->exec_name);
     args=str2tstr(c->opt->exec_args);
+#ifdef MSSPISSL
+    {
+        char ** env = env_alloc( c );
+        char ** p;
+        char * winenv = NULL;
+        size_t winlen = 0;
+        size_t shift = winlen;
+
+        for( p = env; *p; ++p )
+        {
+            size_t plen = strlen( *p ) + 1;
+            winlen += plen;
+            winenv = str_realloc( winenv, winlen + 1 );
+            memcpy( winenv + shift, *p, plen );
+            shift = winlen;
+        }
+        winenv[shift] = 0;
+
+        CreateProcess( name, args, NULL, NULL, TRUE, 0, winenv, NULL, &si, &pi );
+
+        env_free( env );
+        str_free( winenv );
+    }
+#else
     CreateProcess(name, args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+#endif
     str_free(name);
     str_free(args);
 
@@ -1794,6 +1966,10 @@ NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
     sigset_t newmask;
 #endif
 
+#ifdef MSSPISSL
+if( c->is_exec == 0 )
+{
+#endif
     if(c->opt->option.pty) {
         char tty[64];
 
@@ -1804,6 +1980,18 @@ NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
         if(make_sockets(fd))
             throw_exception(c, 1);
     set_nonblock(fd[1], 0); /* switch back to the blocking mode */
+#ifdef MSSPISSL
+    c->exec_fd = fd[1];
+    c->is_exec = 1;
+    return fd[0];
+}
+else
+{
+    fd[0] = INVALID_SOCKET;
+    fd[1] = c->exec_fd;
+    c->exec_fd = INVALID_SOCKET;
+}
+#endif
 
     env=env_alloc(c);
     pid=fork();
@@ -1878,6 +2066,40 @@ char **env_alloc(CLI *c) {
 #endif
         }
     }
+
+#ifdef MSSPISSL
+    if( !getnameinfo( &c->local_addr.sa, c->local_addr_len,
+                      host, 40, port, 6, NI_NUMERICHOST | NI_NUMERICSERV ) )
+    {
+        /* just don't set these variables if getnameinfo() fails */
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "LOCAL_HOST=%s", host );
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "LOCAL_PORT=%s", port );
+    }
+
+    if( c->msh )
+    {
+        const char * subject;
+        size_t slen;
+        const char * issuer;
+        size_t ilen;
+        if( msspi_get_peernames( c->msh, &subject, &slen, &issuer, &ilen ) )
+        {
+            env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+            env[n++] = str_printf( "SSL_CLIENT_DN=%s", subject );
+            env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+            env[n++] = str_printf( "SSL_CLIENT_I_DN=%s", issuer );
+        }
+    }
+
+    {
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "SERVICENAME=%s", c->opt->servname );
+        env = str_realloc( env, ( n + 2 ) * sizeof( char * ) );
+        env[n++] = str_printf( "CLIENTMODE=%d", c->opt->option.client );
+    }
+#endif
 
 #ifdef NO_OPENSSLOFF
     if(c->ssl) {

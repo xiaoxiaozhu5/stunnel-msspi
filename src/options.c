@@ -1751,6 +1751,68 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             s_log( LOG_NOTICE, "%-22s = cert2", "cert2" );
             break;
     }
+
+    /* checkSubject */
+    switch( cmd )
+    {
+        case CMD_SET_DEFAULTS:
+            section->checkSubject = NULL;
+            break;
+        case CMD_SET_VALUE:
+            if( strcasecmp( opt, "checkSubject" ) )
+                break;
+            if( arg[0] )
+                section->checkSubject = str_dup_detached( arg );
+            else
+                return "checkSubject is empty";
+            return NULL; /* OK */
+        case CMD_SET_COPY:
+            section->checkSubject = str_dup_detached( new_service_options.checkSubject );
+            break;
+        case CMD_FREE:
+            str_free( section->checkSubject );
+            break;
+        case CMD_INITIALIZE:
+            if( section->checkSubject && !section->option.verify_chain && !section->option.verify_peer )
+                return "Either \"verifyChain\" or \"verifyPeer\" has to be enabled";
+            break;
+        case CMD_PRINT_DEFAULTS:
+            break;
+        case CMD_PRINT_HELP:
+            s_log( LOG_NOTICE, "%-22s = checkSubject", "checkSubject" );
+            break;
+    }
+
+    /* checkIssuer */
+    switch( cmd )
+    {
+        case CMD_SET_DEFAULTS:
+            section->checkIssuer = NULL;
+            break;
+        case CMD_SET_VALUE:
+            if( strcasecmp( opt, "checkIssuer" ) )
+                break;
+            if( arg[0] )
+                section->checkIssuer = str_dup_detached( arg );
+            else
+                return "checkIssuer is empty";
+            return NULL; /* OK */
+        case CMD_SET_COPY:
+            section->checkIssuer = str_dup_detached( new_service_options.checkIssuer );
+            break;
+        case CMD_FREE:
+            str_free( section->checkIssuer );
+            break;
+        case CMD_INITIALIZE:
+            if( section->checkIssuer && !section->option.verify_chain && !section->option.verify_peer )
+                return "Either \"verifyChain\" or \"verifyPeer\" has to be enabled";
+            break;
+        case CMD_PRINT_DEFAULTS:
+            break;
+        case CMD_PRINT_HELP:
+            s_log( LOG_NOTICE, "%-22s = checkIssuer", "checkIssuer" );
+            break;
+    }
 #endif
 
     /* client */
