@@ -317,7 +317,7 @@ AC_ARG_ENABLE(msspi,
                     *)     LIBS="$LIBS -L/opt/cprocsp/lib/amd64"
                            ;;
                  esac
-                 LIBS="$LIBS -lcapi10 -lcapi20"
+                 LIBS="$LIBS -lcapi10 -lcapi20 -lrdrsup"
 
                  LIBS="$LIBS -L./mapoid -lmapoid"
 
