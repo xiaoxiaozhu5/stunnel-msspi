@@ -620,16 +620,6 @@ NOEXPORT void local_start(CLI *c) {
     if(c->local_rfd.is_socket) {
         memcpy(&c->peer_addr.sa, &addr.sa, (size_t)addr_len);
         c->peer_addr_len=addr_len;
-#ifdef MSSPISSL
-        {
-            addr_len = sizeof( SOCKADDR_UNION );
-            if( !getsockname( c->local_rfd.fd, &addr.sa, &addr_len ) )
-            {
-                memcpy( &c->local_addr.sa, &addr.sa, (size_t)addr_len );
-                c->local_addr_len = addr_len;
-            }
-        }
-#endif
         if(socket_options_set(c->opt, c->local_rfd.fd, 1))
             s_log(LOG_WARNING, "Failed to set local socket options");
     } else {
@@ -649,16 +639,6 @@ NOEXPORT void local_start(CLI *c) {
             if(!c->local_rfd.is_socket) { /* already retrieved */
                 memcpy(&c->peer_addr.sa, &addr.sa, (size_t)addr_len);
                 c->peer_addr_len=addr_len;
-#ifdef MSSPISSL
-                {
-                    addr_len = sizeof( SOCKADDR_UNION );
-                    if( !getsockname( c->local_wfd.fd, &addr.sa, &addr_len ) )
-                    {
-                        memcpy( &c->local_addr.sa, &addr.sa, (size_t)addr_len );
-                        c->local_addr_len = addr_len;
-                    }
-                }
-#endif
             }
             if(socket_options_set(c->opt, c->local_wfd.fd, 1))
                 s_log(LOG_WARNING, "Failed to set local socket options");
@@ -690,6 +670,18 @@ NOEXPORT void local_start(CLI *c) {
     auth_user(c);
     s_log(LOG_NOTICE, "Service [%s] accepted connection from %s",
         c->opt->servname, c->accepted_address);
+
+#ifdef MSSPISSL
+    if( c->local_rfd.is_socket || c->local_wfd.is_socket )
+    {
+        addr_len = sizeof( SOCKADDR_UNION );
+        if( !getsockname( c->local_rfd.is_socket ? c->local_rfd.fd : c->local_wfd.fd, &addr.sa, &addr_len ) )
+        {
+            memcpy( &c->local_addr.sa, &addr.sa, (size_t)addr_len );
+            c->local_addr_len = addr_len;
+        }
+    }
+#endif
 }
 
 NOEXPORT void remote_start(CLI *c) {
@@ -2425,6 +2417,20 @@ NOEXPORT void print_bound_address(CLI *c) {
     s_log(LOG_NOTICE,"Service [%s] connected remote server from %s",
         c->opt->servname, txt);
     str_free(txt);
+
+#ifdef MSSPISSL
+    if( c->is_exec )
+    {
+        memcpy( &c->local_addr.sa, &addr.sa, (size_t)addrlen );
+
+        addrlen = sizeof( SOCKADDR_UNION );
+        if( !getpeername( c->fd, &addr.sa, &addrlen ) )
+        {
+            memcpy( &c->peer_addr.sa, &addr.sa, (size_t)addrlen );
+            c->peer_addr_len = addrlen;
+        }
+    }
+#endif
 }
 
 NOEXPORT void reset(SOCKET fd, char *txt) { /* set lingering on a socket */
