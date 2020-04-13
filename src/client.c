@@ -1083,28 +1083,50 @@ NOEXPORT void ssl_start(CLI *c) {
 
         if( c->opt->checkSubject )
         {
+            NAME_LIST * ptr;
             const char * subject;
             size_t len;
-            if( !msspi_get_peernames( c->msh, &subject, &len, NULL, NULL )
-                || strlen( c->opt->checkSubject ) + 1 != len
-                || memcmp( c->opt->checkSubject, subject, len ) )
+            if( !msspi_get_peernames( c->msh, &subject, &len, NULL, NULL ) )
             {
-                s_log( LOG_ERR, "msspi: checkIssuer failed (\"%s\" != \"%s\")", c->opt->checkSubject, subject );
+                s_log( LOG_ERR, "msspi: get_peernames( subject ) failed" );
                 throw_exception( c, 1 );
             }
+
+            for( ptr = c->opt->checkSubject; ptr; ptr = ptr->next )
+                if( strlen( ptr->name ) + 1 == len && !memcmp( ptr->name, subject, len ) )
+                    break;
+
+            if( !ptr )
+            {
+                s_log( LOG_ERR, "msspi: checkSubject failed (subject = \"%s\")", subject );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: checkSubject OK" );
         }
 
         if( c->opt->checkIssuer )
         {
+            NAME_LIST * ptr;
             const char * issuer;
             size_t len;
-            if( !msspi_get_peernames( c->msh, NULL, NULL, &issuer, &len )
-                || strlen( c->opt->checkIssuer ) + 1 != len
-                || memcmp( c->opt->checkIssuer, issuer, len ) )
+            if( !msspi_get_peernames( c->msh, NULL, NULL, &issuer, &len ) )
             {
-                s_log( LOG_ERR, "msspi: checkIssuer failed (\"%s\" != \"%s\")", c->opt->checkIssuer, issuer );
+                s_log( LOG_ERR, "msspi: get_peernames( issuer ) failed" );
                 throw_exception( c, 1 );
             }
+
+            for( ptr = c->opt->checkIssuer; ptr; ptr = ptr->next )
+                if( strlen( ptr->name ) + 1 == len && !memcmp( ptr->name, issuer, len ) )
+                    break;
+
+            if( !ptr )
+            {
+                s_log( LOG_ERR, "msspi: checkIssuer failed (issuer = \"%s\")", issuer );
+                throw_exception( c, 1 );
+            }
+
+            s_log( LOG_INFO, "msspi: checkIssuer OK" );
         }
 
         return;

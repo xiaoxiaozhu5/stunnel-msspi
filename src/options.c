@@ -1762,15 +1762,15 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             if( strcasecmp( opt, "checkSubject" ) )
                 break;
             if( arg[0] )
-                section->checkSubject = str_dup_detached( arg );
+                name_list_append( &section->checkSubject, arg );
             else
                 return "checkSubject is empty";
             return NULL; /* OK */
         case CMD_SET_COPY:
-            section->checkSubject = str_dup_detached( new_service_options.checkSubject );
+            name_list_dup( &section->checkSubject, new_service_options.checkSubject );
             break;
         case CMD_FREE:
-            str_free( section->checkSubject );
+            name_list_free( section->checkSubject );
             break;
         case CMD_INITIALIZE:
             if( section->checkSubject && !section->option.verify_chain && !section->option.verify_peer )
@@ -1793,15 +1793,15 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             if( strcasecmp( opt, "checkIssuer" ) )
                 break;
             if( arg[0] )
-                section->checkIssuer = str_dup_detached( arg );
+                name_list_append( &section->checkIssuer, arg );
             else
                 return "checkIssuer is empty";
             return NULL; /* OK */
         case CMD_SET_COPY:
-            section->checkIssuer = str_dup_detached( new_service_options.checkIssuer );
+            name_list_dup( &section->checkIssuer, new_service_options.checkIssuer );
             break;
         case CMD_FREE:
-            str_free( section->checkIssuer );
+            name_list_free( section->checkIssuer );
             break;
         case CMD_INITIALIZE:
             if( section->checkIssuer && !section->option.verify_chain && !section->option.verify_peer )

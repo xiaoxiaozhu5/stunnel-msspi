@@ -253,8 +253,8 @@ typedef struct service_options_struct {
     char *mapoid;                                 /* mapoid json map of oids */
     char *cert2;                                   /* second cert (fallback) */
     char *pin2;                                  /* pin-code for second cert */
-    char *checkSubject;                               /* strcmp cert subject */
-    char *checkIssuer;                                 /* strcmp cert issuer */
+    NAME_LIST * checkSubject;                         /* strcmp cert subject */
+    NAME_LIST * checkIssuer;                           /* strcmp cert issuer */
 #endif
     long session_size, session_timeout;
     long unsigned ssl_options_set;
