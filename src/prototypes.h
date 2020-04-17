@@ -982,9 +982,9 @@ int SSL_pending_prx( const SSL * s );
 #define SSL_pending( s ) ( c->msh ? msspi_pending( c->msh ) : SSL_pending_prx( s ) )
 
 int SSL_get_error_prx( const SSL *s, int ret_code );
-int SSL_get_error_msspi( MSSPI_HANDLE h );
+int SSL_get_error_msspi( MSSPI_HANDLE h, int ret );
 #undef SSL_get_error
-#define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh ) : SSL_get_error_prx( s, i ) )
+#define SSL_get_error( s, i ) ( c->msh ? SSL_get_error_msspi( c->msh, i ) : SSL_get_error_prx( s, i ) )
 #endif /* MSSPISSL */
 
 #endif /* defined PROTOTYPES_H */

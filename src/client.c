@@ -80,9 +80,12 @@ int RAND_bytes( unsigned char * buf, int num ) { return msspi_random( buf, num, 
 #define SSL_set_wfd( s, fd ) c->wfd = fd
 #define SSL_has_pending( s ) msspi_pending( c->msh )
 #endif /* NO_OPENSSLOFF */
-int SSL_get_error_msspi( MSSPI_HANDLE h )
+int SSL_get_error_msspi( MSSPI_HANDLE h, int ret )
 {
-    int err = msspi_state( h );
+    int err;
+    if( ret > 0 )
+        return SSL_ERROR_NONE;
+    err = msspi_state( h );
     if( err & MSSPI_ERROR )
         return SSL_ERROR_SYSCALL;
     if( err & MSSPI_SENT_SHUTDOWN && err & MSSPI_RECEIVED_SHUTDOWN )
