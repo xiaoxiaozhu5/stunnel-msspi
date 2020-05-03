@@ -47,6 +47,10 @@
 #ifdef MSSPISSL
 #include "msspi/src/msspi.h"
 #include "mapoid/mapoid.h"
+#ifdef OPENSSL_VERSION_NUMBER
+#undef OPENSSL_VERSION_NUMBER
+#endif
+#define OPENSSL_VERSION_NUMBER 0x1010000fL
 #endif
 
 #if defined(USE_PTHREAD) || defined(USE_WIN32)
