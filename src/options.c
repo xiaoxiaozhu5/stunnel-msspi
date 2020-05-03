@@ -4198,6 +4198,8 @@ NOEXPORT void print_ssl_options(void) {
         s_log(LOG_NOTICE, "options = %s", option->name);
 }
 
+#ifdef NO_OPENSSLOFF
+
 /**************************************** read PSK file */
 
 #ifndef OPENSSL_NO_PSK
@@ -4373,6 +4375,8 @@ NOEXPORT void key_free(TICKET_KEY *head) {
 }
 
 #endif /* OpenSSL 1.0.0 or later */
+
+#endif /* NO_OPENSSLOFF */
 
 /**************************************** socket options */
 

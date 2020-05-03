@@ -1018,7 +1018,6 @@ NOEXPORT void ssl_start(CLI *c) {
                 break;
             case CERT_E_CN_NO_MATCH:
             {
-#if OPENSSL_VERSION_NUMBER>=0x10002000L
                 if( c->opt->sni && c->opt->check_host )
                 {
                     NAME_LIST * ptr;
@@ -1038,7 +1037,6 @@ NOEXPORT void ssl_start(CLI *c) {
                         break;
                     }
                 }
-#endif /* OPENSSL_VERSION_NUMBER>=0x10002000L */
 
                 errinfo = "failed (CERT_E_CN_NO_MATCH)";
                 break;
@@ -1135,7 +1133,9 @@ NOEXPORT void ssl_start(CLI *c) {
         return;
     }
 #endif
-#ifdef NO_OPENSSLOFF
+#ifndef NO_OPENSSLOFF
+}
+#else /* NO_OPENSSLOFF */
     print_cipher(c);
     sess=SSL_get1_session(c->ssl);
     if(sess) {
@@ -1148,7 +1148,6 @@ NOEXPORT void ssl_start(CLI *c) {
         }
         SSL_SESSION_free(sess);
     }
-#endif /* NO_OPENSSLOFF */
 }
 
 NOEXPORT void session_cache_retrieve(CLI *c) {
@@ -1198,6 +1197,8 @@ NOEXPORT void print_cipher(CLI *c) { /* print negotiated cipher */
         expansion ? SSL_COMP_get_name(expansion) : "null");
 #endif
 }
+
+#endif /* NO_OPENSSLOFF */
 
 /****************************** transfer data */
 NOEXPORT void transfer(CLI *c) {

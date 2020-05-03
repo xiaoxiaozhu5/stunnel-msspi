@@ -45,6 +45,8 @@
 #define OPENSSL_NO_ECDH
 #define OPENSSL_NO_DH
 #define OPENSSL_NO_COMP
+#define OPENSSL_NO_MD4
+#define OPENSSL_NO_TLS1_3
 #endif /* NO_OPENSSLOFF */
 
 #include "version.h"
