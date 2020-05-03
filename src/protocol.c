@@ -1464,24 +1464,24 @@ NOEXPORT char * base64( int encode, const char * in, int len )
     {
         uint32_t dwFlags = 0x40000001; // CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF
         uint32_t dwLen = 0;
-        if( !CryptBinaryToStringA( in, len, dwFlags, NULL, &dwLen ) )
+        if( !CryptBinaryToStringA( in, (uint32_t)len, dwFlags, NULL, &dwLen ) )
             return NULL;
         out = str_alloc( dwLen );
         if( !out )
             return NULL;
-        if( CryptBinaryToStringA( in, len, dwFlags, out, &dwLen ) )
+        if( CryptBinaryToStringA( in, (uint32_t)len, dwFlags, out, &dwLen ) )
             return out;
     }
     else
     {
         uint32_t dwFlags = 0x00000006; // CRYPT_STRING_BASE64
         uint32_t dwLen = 0;
-        if( !CryptStringToBinaryA( in, len, dwFlags, NULL, &dwLen, NULL, NULL ) )
+        if( !CryptStringToBinaryA( in, (uint32_t)len, dwFlags, NULL, &dwLen, NULL, NULL ) )
             return NULL;
         out = str_alloc( dwLen );
         if( !out )
             return NULL;
-        if( CryptStringToBinaryA( in, len, dwFlags, out, &dwLen, NULL, NULL ) )
+        if( CryptStringToBinaryA( in, (uint32_t)len, dwFlags, out, &dwLen, NULL, NULL ) )
             return out;        
     }
 

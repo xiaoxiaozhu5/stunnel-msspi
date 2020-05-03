@@ -962,7 +962,7 @@ int SSL_shutdown_prx( SSL * s );
 
 void SSL_set_shutdown_prx( SSL * s, int mode );
 #undef SSL_set_shutdown
-#define SSL_set_shutdown( s, m ) { if( c->msh ){ if( m & SSL_SENT_SHUTDOWN ) msspi_shutdown( c->msh ); }else SSL_set_shutdown_prx( s, m ); }
+#define SSL_set_shutdown( s, m ) { if( c->msh ){ if( (m) & SSL_SENT_SHUTDOWN ) msspi_shutdown( c->msh ); } else SSL_set_shutdown_prx( s, m ); }
 
 int SSL_get_shutdown_prx( const SSL * s );
 int SSL_get_shutdown_msspi( MSSPI_HANDLE h );
