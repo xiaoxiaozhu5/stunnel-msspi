@@ -524,18 +524,30 @@ NOEXPORT void client_run(CLI *c) {
 #endif
     }
 
-#endif /* NO_OPENSSLOFF */
-
+#else /* NO_OPENSSLOFF */
 #ifdef MSSPISSL
-    SSL_set_shutdown( c->ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN );
-    SSL_free( c->ssl );
+    if( c->msh )
+    {
+        msspi_shutdown( c->msh );
+        msspi_close( c->msh );
+        c->msh = NULL;
+    }
 
     if( c->exec_fd != INVALID_SOCKET )
     {
         closesocket( c->exec_fd );
         c->exec_fd = INVALID_SOCKET;
     }
-#endif
+
+#ifdef MAPOIDSSL
+    if( c->moid )
+    {
+        mapoid_close( c->moid );
+        c->moid = NULL;
+    }
+#endif /* MAPOIDSSL */
+#endif /* MSSPISSL */
+#endif /* NO_OPENSSLOFF */
 
         /* cleanup the remote socket */
     if(c->remote_fd.fd!=INVALID_SOCKET) { /* remote socket initialized */
@@ -864,6 +876,7 @@ NOEXPORT void ssl_start(CLI *c) {
                 throw_exception( c, 1 );
             }
         }
+#ifdef MAPOIDSSL
         if( c->opt->mapoid )
         {
             const char * cert = NULL;
@@ -895,8 +908,9 @@ NOEXPORT void ssl_start(CLI *c) {
 
             s_log( LOG_INFO, "mapoid: selfcheck OK" );
         }
+#endif /* MAPOIDSSL */
     }
-#endif
+#endif /* MSSPISSL */
 
     if(c->opt->option.require_cert)
         s_log(LOG_INFO, "Peer certificate required");
@@ -1061,6 +1075,7 @@ NOEXPORT void ssl_start(CLI *c) {
             s_log( LOG_INFO, "msspi: verifypeer OK" );
         }
 
+#ifdef MAPOIDSSL
         if( c->opt->mapoid )
         {
             const char * certs[64] = { NULL };
@@ -1081,6 +1096,7 @@ NOEXPORT void ssl_start(CLI *c) {
 
             s_log( LOG_INFO, "mapoid: verifypeer OK" );
         }
+#endif /* MAPOIDSSL */
 
         if( c->opt->checkSubject )
         {

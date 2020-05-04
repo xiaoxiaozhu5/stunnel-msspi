@@ -38,17 +38,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#ifdef NO_OPENSSLOFF
-#else /* NO_OPENSSLOFF */
-#define OPENSSL_NO_ENGINE
-#define OPENSSL_NO_PSK
-#define OPENSSL_NO_ECDH
-#define OPENSSL_NO_DH
-#define OPENSSL_NO_COMP
-#define OPENSSL_NO_MD4
-#define OPENSSL_NO_TLS1_3
-#endif /* NO_OPENSSLOFF */
-
 #include "version.h"
 
 /**************************************** common constants */
@@ -424,6 +413,25 @@ extern char *sys_errlist[];
 #include <openssl/opensslconf.h>
 /* opensslv.h requires prior opensslconf.h to include -fips in version string */
 #include <openssl/opensslv.h>
+
+#ifdef NO_OPENSSLOFF
+#else /* NO_OPENSSLOFF */
+#define OPENSSL_NO_ENGINE
+#define OPENSSL_NO_PSK
+#define OPENSSL_NO_ECDH
+#define OPENSSL_NO_DH
+#define OPENSSL_NO_COMP
+#define OPENSSL_NO_MD4
+#define OPENSSL_NO_TLS1_3
+#undef OPENSSL_VERSION_NUMBER
+#define OPENSSL_VERSION_NUMBER 0x10100000L
+#ifndef TLS1_1_VERSION
+#define TLS1_1_VERSION 0x0302
+#endif
+#ifndef TLS1_2_VERSION
+#define TLS1_2_VERSION 0x0303
+#endif
+#endif /* NO_OPENSSLOFF */
 
 #if OPENSSL_VERSION_NUMBER<0x0090700fL
 #error OpenSSL 0.9.7 or later is required

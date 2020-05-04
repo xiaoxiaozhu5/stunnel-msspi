@@ -102,6 +102,8 @@ unsigned long stunnel_thread_id(void) {
 
 #endif /* USE_WIN32 */
 
+#ifdef NO_OPENSSLOFF
+
 #if OPENSSL_VERSION_NUMBER>=0x10000000L && OPENSSL_VERSION_NUMBER<0x10100004L
 NOEXPORT void threadid_func(CRYPTO_THREADID *tid) {
     CRYPTO_THREADID_set_numeric(tid, stunnel_thread_id());
@@ -109,15 +111,17 @@ NOEXPORT void threadid_func(CRYPTO_THREADID *tid) {
 #endif
 
 void thread_id_init(void) {
-#ifdef NO_OPENSSLOFF
 #if OPENSSL_VERSION_NUMBER>=0x10000000L && OPENSSL_VERSION_NUMBER<0x10100000L
     CRYPTO_THREADID_set_callback(threadid_func);
 #endif
 #if OPENSSL_VERSION_NUMBER<0x10000000L || !defined(OPENSSL_NO_DEPRECATED)
     CRYPTO_set_id_callback(stunnel_thread_id);
 #endif
-#endif /* NO_OPENSSLOFF */
 }
+
+#else /* NO_OPENSSLOFF */
+void thread_id_init( void ){ }
+#endif /* NO_OPENSSLOFF */
 
 /**************************************** locking */
 

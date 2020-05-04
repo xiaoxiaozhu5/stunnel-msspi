@@ -1665,6 +1665,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             break;
     }
 
+#ifdef MAPOIDSSL
     /* mapoid */
     switch( cmd )
     {
@@ -1693,6 +1694,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
             s_log( LOG_NOTICE, "%-22s = mapoid", "mapoid" );
             break;
     }
+#endif /* MAPOIDSSL */
 
     /* pin2 */
     switch( cmd )

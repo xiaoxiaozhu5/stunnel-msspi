@@ -42,15 +42,14 @@
 
 #ifdef USE_MSSPI
 #define MSSPISSL
+#define MAPOIDSSL
 #endif
 
 #ifdef MSSPISSL
 #include "msspi/src/msspi.h"
+#ifdef MAPOIDSSL
 #include "mapoid/mapoid.h"
-#ifdef OPENSSL_VERSION_NUMBER
-#undef OPENSSL_VERSION_NUMBER
 #endif
-#define OPENSSL_VERSION_NUMBER 0x1010000fL
 #endif
 
 #if defined(USE_PTHREAD) || defined(USE_WIN32)
@@ -254,7 +253,9 @@ typedef struct service_options_struct {
     char *key;                               /* pem (priv key/cert) filename */
 #ifdef MSSPISSL
     char *pin;                                     /* pin-code for msspi key */
+#ifdef MAPOIDSSL
     char *mapoid;                                 /* mapoid json map of oids */
+#endif
     char *cert2;                                   /* second cert (fallback) */
     char *pin2;                                  /* pin-code for second cert */
     NAME_LIST * checkSubject;                         /* strcmp cert subject */
@@ -442,7 +443,9 @@ typedef enum {
 typedef struct client_data_struct {
 #ifdef MSSPISSL
     MSSPI_HANDLE msh;
+#ifdef MAPOIDSSL
     MAPOID_HANDLE moid;
+#endif /* MAPOIDSSL */
     int rfd;
     int wfd;
 #endif
