@@ -73,7 +73,7 @@ int SSL_get_error_prx( const SSL *s, int ret_code ) { return 0; }
 #ifdef MSSPISSL
 #ifdef NO_OPENSSLOFF
 #else /* NO_OPENSSLOFF */
-void sslerror( char * str ) { s_log( LOG_ERR, str ); }
+void sslerror( const char * str ) { s_log( LOG_ERR, "%s", str ); }
 int RAND_bytes( unsigned char * buf, int num ) { return msspi_random( buf, num, 0 ); }
 #define SSL_set_fd( s, fd ) c->rfd = c->wfd = fd
 #define SSL_set_rfd( s, fd ) c->rfd = fd
@@ -2427,7 +2427,7 @@ NOEXPORT int connect_init(CLI *c, int domain) {
 
 NOEXPORT int redirect(CLI *c) {
     SSL_SESSION *sess;
-    void *ex_data;
+    void *ex_data = NULL;
 
     if(!c->opt->redirect_addr.names)
         return 0; /* redirect not configured */

@@ -571,7 +571,9 @@ int pty_allocate(int *, int *, char *);
 
 /**************************************** prototypes for dhparam.c */
 
+#ifndef OPENSSL_NO_DH
 DH *get_dh2048(void);
+#endif /* OPENSSL_NO_DH */
 
 /**************************************** prototypes for cron.c */
 
@@ -604,7 +606,7 @@ void psk_sort(PSK_TABLE *, PSK_KEYS *);
 PSK_KEYS *psk_find(const PSK_TABLE *, const char *);
 #endif /* !defined(OPENSSL_NO_PSK) */
 void print_session_id(SSL_SESSION *);
-void sslerror(char *);
+void sslerror(const char *);
 
 /**************************************** prototypes for verify.c */
 
