@@ -123,11 +123,15 @@ void ui_new_log(const char *line) {
     str_free(tstr);
 }
 
+#ifdef NO_OPENSSLOFF
+
 /**************************************** ctx callbacks */
 
 int ui_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
     return PEM_def_callback(buf, size, rwflag, userdata);
 }
+
+#endif /* NO_OPENSSLOFF */
 
 #ifndef OPENSSL_NO_ENGINE
 UI_METHOD *UI_stunnel() {
