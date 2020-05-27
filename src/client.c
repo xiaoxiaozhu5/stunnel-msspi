@@ -792,17 +792,26 @@ NOEXPORT void ssl_start(CLI *c) {
             c->rfd = c->wfd = c->local_rfd.fd;
 
         c->msh = msspi_open( c, (msspi_read_cb)stunnel_msspi_bio_read, (msspi_write_cb)stunnel_msspi_bio_write );
+
         if( !c->msh )
         {
             s_log( LOG_ERR, "msspi: open failed" );
             throw_exception( c, 1 );
         }
+
+        msspi_set_version( c->msh, c->opt->min_proto_version, c->opt->max_proto_version );
+
         if( c->opt->sni )
             msspi_set_hostname( c->msh, c->opt->sni );
+
         if( c->opt->option.request_cert )
             msspi_set_peerauth( c->msh, 1 );
+
         if( c->opt->option.client )
             msspi_set_client( c->msh );
+
+        if( c->opt->cipher_list )
+            msspi_set_cipherlist( c->msh, c->opt->cipher_list );
 
         for( j = 0; j < 2; j++ )
         {

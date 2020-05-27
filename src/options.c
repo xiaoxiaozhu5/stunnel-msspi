@@ -1544,6 +1544,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
         section->cipher_list=str_dup_detached(arg);
         return NULL; /* OK */
     case CMD_INITIALIZE:
+#ifdef NO_OPENSSLOFF
         if(!section->cipher_list) {
             /* this is only executed for global options, because
              * section->cipher_list is no longer NULL in sections */
@@ -1554,6 +1555,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS **section_ptr,
 #endif /* USE_FIPS */
                 section->cipher_list=str_dup_detached(stunnel_cipher_list);
         }
+#endif // NO_OPENSSLOFF
         break;
     case CMD_PRINT_DEFAULTS:
 #ifdef USE_FIPS
