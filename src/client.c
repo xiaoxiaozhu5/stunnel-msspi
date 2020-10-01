@@ -817,11 +817,26 @@ NOEXPORT void ssl_start(CLI *c) {
         {
             char * cert = j == 0 ? c->opt->cert : c->opt->cert2;
             char * pin = j == 0 ? c->opt->pin : c->opt->pin2;
+            char is_ok = 0;
+            char is_pfx = 0;
 
-            if( cert && !msspi_add_mycert( c->msh, cert, 0 ) )
+            if( !cert )
+            {
+                is_ok = 1;
+            }
+            else if( msspi_add_mycert( c->msh, cert, 0 ) )
+            {
+                is_ok = 1;
+            }
+            else if( pin && msspi_add_mycert_pfx( c->msh, cert, strlen( cert ), pin ) )
+            {
+                is_ok = 1;
+                is_pfx = 1;
+            }
+
+            if( !is_ok )
             {
                 const long int MAX_SIZE = 1024 * 1024;
-                char is_ok = 0;
                 const char *errstr = "unknown";
                 long int size_file = 0;
                 FILE *cert_file = NULL;
@@ -866,6 +881,12 @@ NOEXPORT void ssl_start(CLI *c) {
                         is_ok = 1;
                         break;
                     }
+                    if( pin && msspi_add_mycert_pfx( c->msh, (char *)str_file, (int)size_file, pin ) )
+                    {
+                        is_ok = 1;
+                        is_pfx = 1;
+                        break;
+                    }
                     errstr = "bad file format";
                     break;
                 }
@@ -879,7 +900,7 @@ NOEXPORT void ssl_start(CLI *c) {
                 }
             }
 
-            if( cert && !msspi_set_mycert_options( c->msh, 1, pin, 1 ) )
+            if( cert && !is_pfx && !msspi_set_mycert_options( c->msh, 1, pin, 1 ) )
             {
                 s_log( LOG_ERR, "msspi: msspi_set_mycert_options failed (cert = \"%s\", pin = \"%s\")", cert, pin ? pin : "" );
                 throw_exception( c, 1 );
