@@ -820,6 +820,8 @@ NOEXPORT void ssl_start(CLI *c) {
         {
             char * cert = j == 0 ? c->opt->cert : c->opt->cert2;
             char * pin = j == 0 ? c->opt->pin : c->opt->pin2;
+            char * pcerttype = j == 0 ? &c->opt->certtype : &c->opt->certtype2;
+            char certtype = *pcerttype;
             char is_ok = 0;
             char is_pfx = 0;
 
@@ -827,12 +829,16 @@ NOEXPORT void ssl_start(CLI *c) {
             {
                 is_ok = 1;
             }
-            else if( msspi_add_mycert( c->msh, cert, 0 ) )
+            else if( ( certtype == 0 || certtype == 1 ) && msspi_add_mycert( c->msh, cert, 0 ) )
             {
+                certtype = 1;
+                *pcerttype = certtype;
                 is_ok = 1;
             }
-            else if( pin && msspi_add_mycert_pfx( c->msh, cert, strlen( cert ), pin ) )
+            else if( pin && ( certtype == 0 || certtype == 2 ) && msspi_add_mycert_pfx( c->msh, cert, strlen( cert ), pin ) )
             {
+                certtype = 2;
+                *pcerttype = certtype;
                 is_ok = 1;
                 is_pfx = 1;
             }
@@ -879,13 +885,17 @@ NOEXPORT void ssl_start(CLI *c) {
                         errstr = "can not read file";
                         break;
                     }
-                    if( msspi_add_mycert( c->msh, (char *)str_file, (int)size_file ) )
+                    if( ( certtype == 0 || certtype == 3 ) && msspi_add_mycert( c->msh, (char *)str_file, (int)size_file ) )
                     {
+                        certtype = 3;
+                        *pcerttype = certtype;
                         is_ok = 1;
                         break;
                     }
-                    if( pin && msspi_add_mycert_pfx( c->msh, (char *)str_file, (int)size_file, pin ) )
+                    if( pin && ( certtype == 0 || certtype == 4 ) && msspi_add_mycert_pfx( c->msh, (char *)str_file, (int)size_file, pin ) )
                     {
+                        certtype = 4;
+                        *pcerttype = certtype;
                         is_ok = 1;
                         is_pfx = 1;
                         break;

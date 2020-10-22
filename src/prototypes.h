@@ -260,6 +260,8 @@ typedef struct service_options_struct {
     char *pin2;                                  /* pin-code for second cert */
     NAME_LIST * checkSubject;                         /* strcmp cert subject */
     NAME_LIST * checkIssuer;                           /* strcmp cert issuer */
+    char certtype;                                     /* cert type detector */
+    char certtype2;                                   /* cert2 type detector */
 #endif
     long session_size, session_timeout;
 #if OPENSSL_VERSION_NUMBER>=0x10100000L
