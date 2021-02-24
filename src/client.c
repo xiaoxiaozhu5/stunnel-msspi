@@ -65,6 +65,8 @@ const char * SSL_get_version_prx( const SSL * s ) { return NULL; }
 int SSL_version_prx( const SSL * s ) { return 0; }
 int SSL_pending_prx( const SSL * s ) { return 0; }
 int SSL_get_error_prx( const SSL *s, int ret_code ) { return 0; }
+int fips_available() { return 0; }
+int FIPS_mode() { return 0; }
 #endif /* NO_OPENSSLOFF */
 #endif /* USE_MSSPI */
 

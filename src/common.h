@@ -481,9 +481,12 @@ extern char *sys_errlist[];
 #define OPENSSL_NO_TLS1_3
 #endif /* OpenSSL older than 1.1.1 */
 
+#ifdef NO_OPENSSLOFF
+#else /* NO_OPENSSLOFF */
 #ifdef USE_WIN32
 #define USE_FIPS
 #endif
+#endif /* NO_OPENSSLOFF */
 
 #include <openssl/conf.h>
 #include <openssl/lhash.h>
