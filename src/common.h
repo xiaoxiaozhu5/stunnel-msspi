@@ -47,7 +47,7 @@
 #define LIBWRAP_CLIENTS 5
 
 /* CPU stack size */
-#define DEFAULT_STACK_SIZE 65536
+#define DEFAULT_STACK_SIZE 196608
 /* #define DEBUG_STACK_SIZE */
 
 /* I/O buffer size: 18432 (0x4800) is the maximum size of TLS record payload */
