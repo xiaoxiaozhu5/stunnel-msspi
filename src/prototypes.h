@@ -130,7 +130,10 @@ typedef struct sockaddr_list {                          /* list of addresses */
 
 #ifndef OPENSSL_NO_COMP
 typedef enum {
-    COMP_NONE, COMP_DEFLATE, COMP_ZLIB
+    COMP_NONE,                           /* empty compression algorithms set */
+    COMP_DEFLATE,            /* default OpenSSL's compression algorithms set */
+    COMP_ZLIB,          /* additional historic ZLIB compression algorithm id */
+    STUNNEL_COMPS                   /* number of compression algorithms sets */
 } COMP_TYPE;
 #endif /* !defined(OPENSSL_NO_COMP) */
 
@@ -350,6 +353,7 @@ typedef struct service_options_struct {
 #endif
         unsigned local:1;               /* outgoing interface specified */
         unsigned retry:1;               /* loop remote+program */
+        unsigned session_resume:1;      /* enable session resumption */
         unsigned sessiond:1;
 #ifndef USE_WIN32
         unsigned pty:1;

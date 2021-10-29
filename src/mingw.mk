@@ -50,11 +50,9 @@ mkdirs:
 
 $(bindir)/stunnel.exe: $(win32_common_objs) $(win32_gui_objs)
 	$(win32_cc) -mwindows $(win32_ldflags) -o $(bindir)/stunnel.exe $(win32_common_objs) $(win32_gui_objs) $(win32_gui_libs)
-	-$(srcdir)/../sign/sign.sh $(bindir)/stunnel.exe
 
 $(bindir)/tstunnel.exe: $(win32_common_objs) $(win32_cli_objs)
 	$(win32_cc) $(win32_ldflags) -o $(bindir)/tstunnel.exe $(win32_common_objs) $(win32_cli_objs) $(win32_cli_libs)
-	-$(srcdir)/../sign/sign.sh $(bindir)/tstunnel.exe
 
 $(objdir)/%.o: $(srcdir)/%.c
 	$(win32_cc) -c $(win32_cppflags) $(win32_cflags) -o $@ $<

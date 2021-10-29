@@ -1,6 +1,32 @@
 # stunnel change log
 
 
+### Version 5.60, 2021.08.16, urgency: LOW
+* New features
+  - New 'sessionResume' service-level option to allow
+    or disallow session resumption
+  - Added support for the new SSL_set_options() values.
+  - Download fresh ca-certs.pem for each new release.
+* Bugfixes
+  - Fixed 'redirect' with 'protocol'.  This combination is
+    not supported by 'smtp', 'pop3' and 'imap' protocols.
+  - Enforced minimum WIN32 log window size.
+  - Fixed support for password-protected private keys with
+    OpenSSL 3.0 (thx to Dmitry Belyavskiy).
+  - Added missing TLS options supported in OpenSSL 1.1.1k.
+
+### Version 5.59, 2021.04.05, urgency: HIGH
+* Security bugfixes
+  - OpenSSL DLLs updated to version 1.1.1k.
+* New features
+  - Client-side "protocol = ldap" support (thx to Bart
+    Dopheide and Seth Grover).
+* Bugfixes
+  - The test suite fixed not to require external connectivity.
+  - Fixed paths in generated manuals (thx to Tatsuki Makino).
+  - Fixed configuration reload when compression is used.
+  - Fixed compilation with early releases of OpenSSL 1.1.1.
+
 ### Version 5.58, 2021.02.20, urgency: HIGH
 * Security bugfixes
   - The "redirect" option was fixed to properly handle
