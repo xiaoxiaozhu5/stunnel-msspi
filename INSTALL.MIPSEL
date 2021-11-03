@@ -73,7 +73,7 @@ else
         # Возможно нужно выставить PERLLIB и PERL5LIB
         sudo perl test-stunnel-msspi.pl || exit 1
         cd ../src
-        tar -cvzf ${TRAVIS_TAG}_linux-mipsel.tar.gz stunnel-msspi
+        tar -cvzf ${BUILD_TAG}_linux-mipsel.tar.gz stunnel-msspi
         cd ..;
     fi
 fi

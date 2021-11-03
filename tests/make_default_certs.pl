@@ -1,4 +1,4 @@
-
+use lib '.';
 use strict;
 use Scripts;
 

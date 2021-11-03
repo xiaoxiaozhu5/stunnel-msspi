@@ -27,7 +27,7 @@ else
         cd tests
         sudo perl test-stunnel-msspi.pl || exit 1
         cd ../src
-        tar -cvzf ${TRAVIS_TAG}_linux-amd64.tar.gz stunnel-msspi
+        tar -cvzf ${GITHUB_REF#refs/*/}-amd64-ubuntu.tar.gz stunnel-msspi
         cd ..;
     fi
 fi

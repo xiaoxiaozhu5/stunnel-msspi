@@ -5,8 +5,6 @@ MIRROR=http://ports.ubuntu.com/ubuntu-ports
 VERSION=trusty
 CHROOT_ARCH=arm64
 CPRO_SUFFIX=aarch64
-#TRAVIS_BUILD_DIR=/home/full/stunnel
-#MSSPI=yes
 
 # Debian package dependencies for the host
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
@@ -58,11 +56,11 @@ if [ ! -e "/.chroot_arm64_is_done" ]; then
     
     # Create file with environment variables which will be used inside chrooted
     # environment
-    echo "export TRAVIS_BUILD_DIR='${TRAVIS_BUILD_DIR}'" > envvars.sh
+    echo "export BUILD_DIR='${BUILD_DIR}'" > envvars.sh
     echo "export CONFIGURE_OPTIONS='${CONFIGURE_OPTIONS}'" >> envvars.sh
     echo "export MSSPI='${MSSPI}'" >> envvars.sh
     echo "export CSPMODE='${CSPMODE}'" >> envvars.sh
-    echo "export TRAVIS_TAG='${TRAVIS_TAG}'" >> envvars.sh
+    echo "export BUILD_TAG='${GITHUB_REF#refs/*/}'" >> envvars.sh
     echo "export CPRO_SUFFIX='${CPRO_SUFFIX}'" >> envvars.sh
     chmod a+x envvars.sh
     cat envvars.sh
@@ -72,15 +70,15 @@ if [ ! -e "/.chroot_arm64_is_done" ]; then
     sudo chroot ${CHROOT_DIR} apt-get --allow-unauthenticated install \
         -qq -y ${GUEST_DEPENDENCIES} || exit 1
 
-    # Create build dir and copy travis build files to our chroot environment
-    sudo mkdir -p ${CHROOT_DIR}${TRAVIS_BUILD_DIR} || exit 1
-    sudo rsync -av ${TRAVIS_BUILD_DIR}/ ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/ || exit 1
+    # Create build dir and copy build files to our chroot environment
+    sudo mkdir -p ${CHROOT_DIR}${BUILD_DIR} || exit 1
+    sudo rsync -aq ${BUILD_DIR}/ ${CHROOT_DIR}${BUILD_DIR}/ || exit 1
 
     # Indicate chroot environment has been set up
     sudo touch ${CHROOT_DIR}/.chroot_arm64_is_done || exit 1
 
     # Call ourselves again which will cause tests to run
-    sudo chroot ${CHROOT_DIR} bash -cex "cd ${TRAVIS_BUILD_DIR} && ./build_arm64.sh" || exit 1
+    sudo chroot ${CHROOT_DIR} bash -cex "cd ${BUILD_DIR} && ./build_arm64.sh" || exit 1
     #-----------------------------------------------------------------------------
 else
     # We are inside ARM chroot
@@ -145,7 +143,7 @@ else
             cd tests
             perl test-stunnel-msspi.pl || exit 1
             cd ../src
-            tar -cvzf ${TRAVIS_TAG}_linux-arm64.tar.gz stunnel-msspi
+            tar -cvzf ${BUILD_TAG}_linux-arm64.tar.gz stunnel-msspi
             cd ..;
         fi
     fi
@@ -153,4 +151,4 @@ else
     exit 0
 fi
 
-mv ${CHROOT_DIR}${TRAVIS_BUILD_DIR}/src/${TRAVIS_TAG}_linux-arm64.tar.gz ./src/
+mv ${CHROOT_DIR}${BUILD_DIR}/src/${GITHUB_REF#refs/*/}_linux-arm64.tar.gz ./src/

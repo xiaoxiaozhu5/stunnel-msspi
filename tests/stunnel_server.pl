@@ -1,5 +1,4 @@
-
-
+use lib '.';
 use strict;
 use Scripts;
 use IO::Select;

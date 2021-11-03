@@ -32,7 +32,7 @@ if [ "$1" = "in_docker" ]; then
             cd tests
             sudo perl test-stunnel-msspi.pl || exit 1
             cd ../src
-            tar -cvzf ${TRAVIS_TAG}_linux-amd64${BUILD_OS:+_$BUILD_OS}.tar.gz stunnel-msspi
+            tar -cvzf ${BUILD_TAG}-amd64-centos.tar.gz stunnel-msspi
             cd ..;
         fi
     fi
@@ -43,7 +43,7 @@ else
     sleep 5
 
     echo "export BUILD_OS='${BUILD_OS}'" > envvars.sh
-    echo "export TRAVIS_TAG='${TRAVIS_TAG}'" >> envvars.sh
+    echo "export BUILD_TAG='${GITHUB_REF#refs/*/}'" >> envvars.sh
     echo "export CONFIGURE_OPTIONS='${CONFIGURE_OPTIONS}'" >> envvars.sh
     echo "export CSPMODE='${CSPMODE}'" >> envvars.sh
     echo "export MSSPI='${MSSPI}'" >> envvars.sh
