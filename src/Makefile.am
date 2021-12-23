@@ -32,7 +32,7 @@ stunnel_CXXFLAGS = $(CFLAGS)
 # Red Hat "by design" bug #82369
 stunnel_CPPFLAGS = -I$(SYSROOT)/usr/kerberos/include
 
-# Additional preprocesor definitions
+# Additional preprocessor definitions
 stunnel_CPPFLAGS += -I$(SSLDIR)/include
 stunnel_CPPFLAGS += -DLIBDIR='"$(pkglibdir)"'
 stunnel_CPPFLAGS += -DCONFDIR='"$(sysconfdir)/stunnel"'
