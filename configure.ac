@@ -37,7 +37,7 @@ AC_PROG_MAKE_SET
 ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_MSG_NOTICE([**************************************** bash completion])
-AC_ARG_WITH([bashcompdir],
+AC_ARG_WITH(bashcompdir,
     AS_HELP_STRING([--with-bashcompdir=DIR], [directory for bash completions]), ,
     [PKG_CHECK_VAR([with_bashcompdir], [bash-completion], [completionsdir], ,
         [with_bashcompdir="${datarootdir}/bash-completion/completions"])])
