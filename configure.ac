@@ -36,19 +36,6 @@ AC_PROG_MAKE_SET
 # silent build by default
 ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-if test "$host_os" = "original"; then
-
-AC_MSG_NOTICE([**************************************** bash completion])
-AC_ARG_WITH([bashcompdir],
-    AS_HELP_STRING([--with-bashcompdir=DIR], [directory for bash completions]), ,
-    [PKG_CHECK_VAR([with_bashcompdir], [bash-completion], [completionsdir], ,
-        [with_bashcompdir="${datarootdir}/bash-completion/completions"])])
-AC_MSG_CHECKING([for bashcompdir])
-AC_MSG_RESULT([$with_bashcompdir])
-AC_SUBST([bashcompdir], [$with_bashcompdir])
-
-fi
-
 AC_MSG_NOTICE([**************************************** thread model])
 # thread detection should be done first, as it may change the CC variable
 
