@@ -36,7 +36,7 @@ AC_PROG_MAKE_SET
 # silent build by default
 ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-if test "$host_os" != "original"; then
+if test "$host_os" = "original"; then
 
 AC_MSG_NOTICE([**************************************** bash completion])
 AC_ARG_WITH([bashcompdir],
