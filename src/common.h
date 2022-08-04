@@ -490,10 +490,10 @@ extern char *sys_errlist[];
 #endif /* OpenSSL older than 1.1.1 */
 
 #ifdef NO_OPENSSLOFF
-#else /* NO_OPENSSLOFF */
 #ifdef USE_WIN32
 #define USE_FIPS
 #endif
+#else /* NO_OPENSSLOFF */
 #endif /* NO_OPENSSLOFF */
 
 #include <openssl/conf.h>

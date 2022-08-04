@@ -217,6 +217,7 @@ int WINAPI WinMain(HINSTANCE this_instance, HINSTANCE prev_instance,
     /* try to enter the "config" subdirectory, ignore the result */
     SetCurrentDirectory(TEXT("config"));
 #endif
+#ifdef NO_OPENSSLOFF
     _tputenv(str_tprintf(TEXT("OPENSSL_ENGINES=%s\\engines"),
         stunnel_exe_path));
     _tputenv(str_tprintf(TEXT("OPENSSL_MODULES=%s\\ossl-modules"),
@@ -224,6 +225,7 @@ int WINAPI WinMain(HINSTANCE this_instance, HINSTANCE prev_instance,
     _tputenv(str_tprintf(TEXT("OPENSSL_CONF=%s\\config\\openssl.cnf"),
         stunnel_exe_path));
     crypto_init(tstr2str(stunnel_exe_path)); /* initialize libcrypto */
+#endif // NO_OPENSSLOFF
 
     gui_cmdline(); /* setup global cmdline structure */
     control_pipe_names();

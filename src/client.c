@@ -35,6 +35,7 @@
  *   forward this exception.
  */
 
+#include "common.h"
 
 /* Save openssl functions */
 #ifdef USE_MSSPI
