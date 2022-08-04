@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -49,6 +49,8 @@
 #include <sys/socket.h> /* for AF_INET */
 #endif
 #undef getpeername
+
+int getpeername(int, struct sockaddr_in *, int *);
 
 int getpeername(int s, struct sockaddr_in *name, int *len) {
     char *value;

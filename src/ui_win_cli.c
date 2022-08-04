@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -35,7 +35,6 @@
  *   forward this exception.
  */
 
-#include "common.h"
 #include "prototypes.h"
 
 int main(int argc, char *argv[]) {
@@ -69,6 +68,7 @@ int main(int argc, char *argv[]) {
         stunnel_exe_path));
     _tputenv(str_tprintf(TEXT("OPENSSL_CONF=%s\\config\\openssl.cnf"),
         stunnel_exe_path));
+    crypto_init(tstr2str(stunnel_exe_path)); /* initialize libcrypto */
 
     if(WSAStartup(MAKEWORD(2, 2), &wsa_state))
         return 1;

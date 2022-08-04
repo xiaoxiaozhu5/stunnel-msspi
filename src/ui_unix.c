@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -35,7 +35,6 @@
  *   forward this exception.
  */
 
-#include "common.h"
 #include "prototypes.h"
 
 NOEXPORT int main_unix(int, char*[]);
@@ -55,6 +54,7 @@ int main(int argc, char* argv[]) { /* execution begins here 8-) */
     mallopt(M_MMAP_THRESHOLD, 4096);
 #endif
     tls_init(); /* initialize thread-local storage */
+    crypto_init(NULL); /* initialize libcrypto */
     retval=main_unix(argc, argv);
     main_cleanup();
     return retval;

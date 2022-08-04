@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -104,7 +104,6 @@ typedef __int64             ssize_t;
 typedef int                 ssize_t;
 #endif /* _WIN64 */
 #endif /* !__MINGW32__ */
-#define PRIX64 "I64X"
 #define USE_IPv6
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_NONSTDC_NO_DEPRECATE
@@ -250,6 +249,10 @@ typedef int                 ssize_t;
 #include <tchar.h>
 
 #include "resources.h"
+
+#ifndef PRIX64
+#define PRIX64 "I64X"
+#endif
 
 /**************************************** non-WIN32 headers */
 

@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -35,7 +35,6 @@
  *   forward this exception.
  */
 
-#include "common.h"
 #include "prototypes.h"
 #include <commdlg.h>
 #include <commctrl.h>
@@ -224,6 +223,7 @@ int WINAPI WinMain(HINSTANCE this_instance, HINSTANCE prev_instance,
         stunnel_exe_path));
     _tputenv(str_tprintf(TEXT("OPENSSL_CONF=%s\\config\\openssl.cnf"),
         stunnel_exe_path));
+    crypto_init(tstr2str(stunnel_exe_path)); /* initialize libcrypto */
 
     gui_cmdline(); /* setup global cmdline structure */
     control_pipe_names();
@@ -479,8 +479,8 @@ NOEXPORT int gui_loop() {
 
 /**************************************** GUI callbacks */
 
-NOEXPORT void CALLBACK timer_proc(HWND hwnd, UINT msg, UINT_PTR id, DWORD t) {
-    (void)hwnd; /* squash the unused parameter warning */
+NOEXPORT void CALLBACK timer_proc(HWND hWnd, UINT msg, UINT_PTR id, DWORD t) {
+    (void)hWnd; /* squash the unused parameter warning */
     (void)msg; /* squash the unused parameter warning */
     (void)id; /* squash the unused parameter warning */
     (void)t; /* squash the unused parameter warning */
@@ -1292,6 +1292,7 @@ NOEXPORT void log_update(void) {
         removed_logs=0;
     } else {
         txt=NULL;
+        offset=0; /* only needed to avoid a warning in MSVC */
     }
     CRYPTO_THREAD_unlock(stunnel_locks[LOCK_WIN_LOG]);
 
@@ -1503,6 +1504,7 @@ NOEXPORT unsigned __stdcall control_pipe_server_thread(void *arg) {
         PostMessage(hwnd, WM_TERMINATE, 0, 0); /* terminate GUI */
     tls_cleanup();
     _endthreadex(0);
+    return 0;
 }
 
 NOEXPORT unsigned __stdcall control_pipe_instance_thread(void *arg) {
@@ -1523,7 +1525,7 @@ NOEXPORT unsigned __stdcall control_pipe_instance_thread(void *arg) {
                 num_clients=atol(message+12);
             } else if(is_prefix(message, "signal ")) {
                 control_pipe_send(pipe, "succeeded");
-                signal_post((uint8_t)atoi(message+7));
+                gui_signal_post((uint8_t)atoi(message+7));
             } else if(!strcasecmp(message, "connect")) {
                 control_pipe_send(pipe, "succeeded");
                 ShowWindow(hwnd, SW_SHOWNORMAL); /* show window */
@@ -1551,6 +1553,7 @@ NOEXPORT unsigned __stdcall control_pipe_instance_thread(void *arg) {
     CloseHandle(pipe);
     tls_cleanup();
     _endthreadex(0);
+    return 0;
 }
 
 NOEXPORT int control_pipe_send(HANDLE pipe, const char *format, ...) {
@@ -1635,8 +1638,7 @@ NOEXPORT int service_install() {
     service_path=str_tprintf(TEXT("\"%s\" -service %s"),
         stunnel_exe_path, params_get());
     service=CreateService(scm, SERVICE_NAME, SERVICE_DISPLAY_NAME,
-        SERVICE_ALL_ACCESS,
-        SERVICE_WIN32_OWN_PROCESS|SERVICE_INTERACTIVE_PROCESS,
+        SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
         SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, service_path,
         NULL, NULL, TEXT("TCPIP\0"), NULL, NULL);
     if(!service) {
@@ -1658,7 +1660,7 @@ NOEXPORT int service_install() {
 
 NOEXPORT int service_uninstall(void) {
     SC_HANDLE scm, service;
-    SERVICE_STATUS serviceStatus;
+    SERVICE_STATUS service_status;
 
     scm=OpenSCManager(0, 0, SC_MANAGER_CONNECT);
     if(!scm) {
@@ -1671,13 +1673,13 @@ NOEXPORT int service_uninstall(void) {
         CloseServiceHandle(scm);
         return 1;
     }
-    if(!QueryServiceStatus(service, &serviceStatus)) {
+    if(!QueryServiceStatus(service, &service_status)) {
         error_box(TEXT("QueryServiceStatus"));
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
         return 1;
     }
-    if(serviceStatus.dwCurrentState!=SERVICE_STOPPED) {
+    if(service_status.dwCurrentState!=SERVICE_STOPPED) {
         message_box(TEXT("The service is still running"), MB_ICONERROR);
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
@@ -1697,7 +1699,7 @@ NOEXPORT int service_uninstall(void) {
 
 NOEXPORT int service_start(void) {
     SC_HANDLE scm, service;
-    SERVICE_STATUS serviceStatus;
+    SERVICE_STATUS service_status;
 
     scm=OpenSCManager(0, 0, SC_MANAGER_CONNECT);
     if(!scm) {
@@ -1718,14 +1720,14 @@ NOEXPORT int service_start(void) {
     }
     do {
         Sleep(1000);
-        if(!QueryServiceStatus(service, &serviceStatus)) {
+        if(!QueryServiceStatus(service, &service_status)) {
             error_box(TEXT("QueryServiceStatus"));
             CloseServiceHandle(service);
             CloseServiceHandle(scm);
             return 1;
         }
-    } while(serviceStatus.dwCurrentState==SERVICE_START_PENDING);
-    if(serviceStatus.dwCurrentState!=SERVICE_RUNNING) {
+    } while(service_status.dwCurrentState==SERVICE_START_PENDING);
+    if(service_status.dwCurrentState!=SERVICE_RUNNING) {
         message_box(TEXT("Failed to start service"), MB_ICONERROR);
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
@@ -1739,7 +1741,7 @@ NOEXPORT int service_start(void) {
 
 NOEXPORT int service_stop(void) {
     SC_HANDLE scm, service;
-    SERVICE_STATUS serviceStatus;
+    SERVICE_STATUS service_status;
 
     scm=OpenSCManager(0, 0, SC_MANAGER_CONNECT);
     if(!scm) {
@@ -1752,19 +1754,19 @@ NOEXPORT int service_stop(void) {
         CloseServiceHandle(scm);
         return 1;
     }
-    if(!QueryServiceStatus(service, &serviceStatus)) {
+    if(!QueryServiceStatus(service, &service_status)) {
         error_box(TEXT("QueryServiceStatus"));
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
         return 1;
     }
-    if(serviceStatus.dwCurrentState==SERVICE_STOPPED) {
+    if(service_status.dwCurrentState==SERVICE_STOPPED) {
         message_box(TEXT("The service is already stopped"), MB_ICONERROR);
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
         return 1;
     }
-    if(!ControlService(service, SERVICE_CONTROL_STOP, &serviceStatus)) {
+    if(!ControlService(service, SERVICE_CONTROL_STOP, &service_status)) {
         error_box(TEXT("ControlService"));
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
@@ -1772,13 +1774,13 @@ NOEXPORT int service_stop(void) {
     }
     do {
         Sleep(1000);
-        if(!QueryServiceStatus(service, &serviceStatus)) {
+        if(!QueryServiceStatus(service, &service_status)) {
             error_box(TEXT("QueryServiceStatus"));
             CloseServiceHandle(service);
             CloseServiceHandle(scm);
             return 1;
         }
-    } while(serviceStatus.dwCurrentState!=SERVICE_STOPPED);
+    } while(service_status.dwCurrentState!=SERVICE_STOPPED);
     message_box(TEXT("Service stopped"), MB_ICONINFORMATION);
     CloseServiceHandle(service);
     CloseServiceHandle(scm);

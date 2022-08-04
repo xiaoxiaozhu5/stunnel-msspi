@@ -1,6 +1,37 @@
 # stunnel change log
 
 
+### Version 5.65, 2022.07.11, urgency: HIGH
+* Security bugfixes
+  - OpenSSL DLLs updated to version 3.0.5.
+* Bugfixes
+  - Fixed handling globally enabled FIPS.
+  - Fixed the default openssl.cnf path in stunnel.exe.
+  - Fixed a number of MSVC warnings.
+
+### Version 5.64, 2022.05.06, urgency: MEDIUM
+* Security bugfixes
+  - OpenSSL DLLs updated to version 3.0.3.
+* New features
+  - Updated the pkcs11 engine for Windows.
+* Bugfixes
+  - Removed the SERVICE_INTERACTIVE_PROCESS flag in
+    "stunnel -install".
+
+### Version 5.63, 2022.03.15, urgency: HIGH
+* Security bugfixes
+  - OpenSSL DLLs updated to version 3.0.2.
+* New features
+  - Updated stunnel.spec to support bash completion.
+* Bugfixes
+  - Fixed a PRNG initialization crash (thx to Gleydson Soares).
+
+### Version 5.62, 2022.01.17, urgency: MEDIUM
+* New features
+  - Added a bash completion script.
+* Bugfixes
+  - Fixed a transfer() loop bug.
+
 ### Version 5.61, 2021.12.22, urgency: LOW
 * New features sponsored by the University of Maryland
   - Added new "protocol = capwin" and "protocol = capwinctrl"

@@ -1,5 +1,5 @@
 # OpenSSL configuration file to create a server certificate
-# by Michal Trojnara 1998-2021
+# by Michal Trojnara 1998-2022
 
 # Use this in order to automatically load providers.
 openssl_conf = openssl_init
@@ -12,11 +12,16 @@ config_diagnostics = 1
 
 [openssl_init]
 providers = provider_sect
+alg_section = evp_properties
 
 # List of providers to load
 [provider_sect]
 default = default_sect
 #fips = fips_sect
+
+# To enforce FIPS mode for the application
+[evp_properties]
+#default_properties = "fips=yes"
 
 [default_sect]
 activate = 1

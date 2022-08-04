@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -35,7 +35,6 @@
  *   forward this exception.
  */
 
-#include "common.h"
 
 /* Save openssl functions */
 #ifdef USE_MSSPI
@@ -266,7 +265,7 @@ NOEXPORT void connect_setup(CLI *);
 NOEXPORT int connect_init(CLI *, int);
 NOEXPORT int redirect(CLI *);
 NOEXPORT void print_bound_address(CLI *);
-NOEXPORT void reset(SOCKET, char *);
+NOEXPORT void reset(SOCKET, const char *);
 
 /* allocate local data structure for the new thread */
 CLI *alloc_client_session(SERVICE_OPTIONS *opt, SOCKET rfd, SOCKET wfd) {
@@ -392,7 +391,7 @@ void client_free(CLI *c) {
 #endif /* __GNUC__ */
 NOEXPORT void exec_connect_loop(CLI *c) {
     unsigned long long seq=0;
-    char *fresh_id=c->tls->id;
+    const char *fresh_id=c->tls->id;
     unsigned retry;
 
     do {
@@ -1296,7 +1295,11 @@ NOEXPORT void print_tmp_key(SSL *s) {
 #endif /* OpenSSL 1.1.1 or later */
 
 NOEXPORT void print_cipher(CLI *c) { /* print negotiated cipher */
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+    const SSL_CIPHER *cipher;
+#else
     SSL_CIPHER *cipher;
+#endif /* OpenSSL 1.1.1 or later */
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *compression, *expansion;
 #endif
@@ -1309,7 +1312,7 @@ NOEXPORT void print_cipher(CLI *c) { /* print negotiated cipher */
         SSL_session_reused(c->ssl) && !c->flag.psk ?
             "previous session reused" : "new session negotiated");
 
-    cipher=(SSL_CIPHER *)SSL_get_current_cipher(c->ssl);
+    cipher=SSL_get_current_cipher(c->ssl);
     s_log(LOG_INFO, "%s ciphersuite: %s (%d-bit encryption)",
         SSL_get_version(c->ssl), SSL_CIPHER_get_name(cipher),
         SSL_CIPHER_get_bits(cipher, NULL));
@@ -1365,22 +1368,16 @@ NOEXPORT void transfer(CLI *c) {
         s_poll_init(c->fds, 0); /* initialize the structure */
         /* for plain socket open data strem = open file descriptor */
         /* make sure to add each open socket to receive exceptions! */
-        if(c->sock_rfd->fd==c->sock_wfd->fd) {
-            if(sock_open_rd || sock_open_wr)
-                s_poll_add(c->fds, c->sock_rfd->fd,
-                    sock_open_rd && c->sock_ptr<BUFFSIZE,
-                    sock_open_wr && c->ssl_ptr>0);
-        } else {
-            if(sock_open_rd) /* only poll if the read file descriptor is open */
-                s_poll_add(c->fds, c->sock_rfd->fd, c->sock_ptr<BUFFSIZE, 0);
-            if(sock_open_wr) /* only poll if the write file descriptor is open */
-                s_poll_add(c->fds, c->sock_wfd->fd, 0, c->ssl_ptr>0);
-        }
+        if(sock_open_rd) /* only poll if the read file descriptor is open */
+            s_poll_add(c->fds, c->sock_rfd->fd, c->sock_ptr<BUFFSIZE, 0);
+        if(sock_open_wr) /* only poll if the write file descriptor is open */
+            s_poll_add(c->fds, c->sock_wfd->fd, 0, c->ssl_ptr>0);
         /* poll TLS file descriptors unless TLS shutdown was completed */
         if(SSL_get_shutdown(c->ssl)!=
                 (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN)) {
             s_poll_add(c->fds, c->ssl_rfd->fd,
-                read_wants_read || write_wants_read || shutdown_wants_read,
+                read_wants_read || write_wants_read || shutdown_wants_read, 0);
+            s_poll_add(c->fds, c->ssl_wfd->fd, 0,
                 read_wants_write || write_wants_write || shutdown_wants_write);
         }
 
@@ -2097,7 +2094,9 @@ else
 
 #else /* standard Unix version */
 
+#ifndef HAVE_UNISTD_H
 extern char **environ;
+#endif
 
 NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
     int fd[2], pid;
@@ -2197,7 +2196,8 @@ char **env_alloc(CLI *c) {
             env[n++]=str_dup("LD_PRELOAD_32=" LIBDIR "/libstunnel.so");
             env=str_realloc(env, (n+2)*sizeof(char *));
             env[n++]=str_dup("LD_PRELOAD_64=" LIBDIR "/" MACH64 "/libstunnel.so");
-#elif __osf /* for Tru64 _RLD_LIST is used instead */
+#elif defined(__osf) || defined(__osf__)
+            /* for Tru64 _RLD_LIST is used instead */
             env=str_realloc(env, (n+2)*sizeof(char *));
             env[n++]=str_dup("_RLD_LIST=" LIBDIR "/libstunnel.so:DEFAULT");
 #else
@@ -2437,28 +2437,16 @@ NOEXPORT int connect_init(CLI *c, int domain) {
 
     if(c->bind_addr) {
         /* setup bind_addr based on c->bind_addr */
-#if 0
-        /* IPv6 addresses converted from IPv4 cause timeouts */
-#ifdef USE_IPv6
-        if(c->bind_addr->sa.sa_family==AF_INET && domain==AF_INET6) {
-            /* convert the binding address from IPv4 to IPv6 */
-            memset(&bind_addr, 0, sizeof bind_addr);
-            bind_addr.in6.sin6_family=AF_INET6;
-            bind_addr.in6.sin6_port=c->bind_addr->in.sin_port;
-            /* address format example: ::ffff:192.0.2.128 */
-            memset((char *)&bind_addr.in6.sin6_addr+10, 0xff, 2);
-            memcpy((char *)&bind_addr.in6.sin6_addr+12,
-                &c->bind_addr->in.sin_addr, 4);
-        } else /* just make a local copy */
-#endif
-#endif
-            memcpy(&bind_addr, c->bind_addr, (size_t)addr_len(c->bind_addr));
+        memcpy(&bind_addr, c->bind_addr, (size_t)addr_len(c->bind_addr));
         /* perform the initial sanity checks before creating a socket */
         if(bind_addr.sa.sa_family!=domain) {
             s_log(LOG_DEBUG, "Cannot assign an AF=%d address an AF=%d socket",
                 bind_addr.sa.sa_family, domain);
             return 1; /* failure */
         }
+    } else {
+        /* only needed to avoid a warning in MSVC */
+        memset(&bind_addr, 0, sizeof bind_addr);
     }
 
     /* create a new socket */
@@ -2581,7 +2569,7 @@ NOEXPORT void print_bound_address(CLI *c) {
 #endif
 }
 
-NOEXPORT void reset(SOCKET fd, char *txt) { /* set lingering on a socket */
+NOEXPORT void reset(SOCKET fd, const char *txt) { /* set lingering on a socket */
     struct linger l;
 
     l.l_onoff=1;

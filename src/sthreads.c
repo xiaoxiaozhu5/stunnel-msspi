@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -40,9 +40,12 @@
 #include <os2.h>
 #endif
 
-#include "common.h"
 #include "prototypes.h"
 
+/**************************************** prototypes */
+
+NOEXPORT void thread_id_init(void);
+NOEXPORT void locking_init(void);
 #ifndef USE_FORK
 CLI *thread_head=NULL;
 NOEXPORT void thread_list_add(CLI *);
@@ -110,7 +113,7 @@ NOEXPORT void threadid_func(CRYPTO_THREADID *tid) {
 }
 #endif
 
-void thread_id_init(void) {
+NOEXPORT void thread_id_init() {
 #if OPENSSL_VERSION_NUMBER>=0x10000000L && OPENSSL_VERSION_NUMBER<0x10100000L
     CRYPTO_THREADID_set_callback(threadid_func);
 #endif
@@ -269,11 +272,12 @@ NOEXPORT int s_atomic_add(int *val, int amount, CRYPTO_RWLOCK *lock) {
 #if !defined(USE_OS_THREADS)
     /* no synchronization is needed */
     return *val+=amount;
-#elif defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
+#elif defined(__ATOMIC_ACQ_REL)
     if(__atomic_is_lock_free(sizeof *val, val))
         return __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
 #elif defined(_MSC_VER)
-    return InterlockedExchangeAdd(val, amount)+amount;
+    /* casting is safe, because sizeof(long)==sizeof(int) on Windows */
+    return InterlockedExchangeAdd((long *)val, amount)+amount;
 #endif
     CRYPTO_THREAD_write_lock(lock);
     ret=(*val+=amount);
@@ -391,7 +395,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock) {
 
 #endif /* NO_OPENSSL_LOCKS */
 
-void locking_init(void) {
+NOEXPORT void locking_init() {
     size_t i;
 #ifdef NO_OPENSSLOFF
 #if defined(USE_OS_THREADS) && OPENSSL_VERSION_NUMBER<0x10100004L

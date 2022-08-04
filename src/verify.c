@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2021 Michal Trojnara <Michal.Trojnara@stunnel.org>
+ *   Copyright (C) 1998-2022 Michal Trojnara <Michal.Trojnara@stunnel.org>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -35,7 +35,6 @@
  *   forward this exception.
  */
 
-#include "common.h"
 #include "prototypes.h"
 
 /**************************************** prototypes */
@@ -471,7 +470,7 @@ NOEXPORT int ocsp_check(CLI *c, X509_STORE_CTX *callback_ctx) {
     }
 
     /* use the responder from AIA (Authority Information Access) */
-    if(c->opt->option.aia && (aia=X509_get1_ocsp(cert))) {
+    if(c->opt->option.aia && (aia=X509_get1_ocsp(cert))!=NULL) {
         for(i=0; i<sk_OPENSSL_STRING_num(aia); i++) {
             url=sk_OPENSSL_STRING_value(aia, i);
             s_log(LOG_NOTICE, "OCSP: Connecting the AIA responder \"%s\"", url);
