@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
     /* try to enter the "config" subdirectory, ignore the result */
     SetCurrentDirectory(TEXT("config"));
 #endif
+#ifdef NO_OPENSSLOFF
     _tputenv(str_tprintf(TEXT("OPENSSL_ENGINES=%s\\engines"),
         stunnel_exe_path));
     _tputenv(str_tprintf(TEXT("OPENSSL_MODULES=%s\\ossl-modules"),
@@ -69,6 +70,7 @@ int main(int argc, char *argv[]) {
     _tputenv(str_tprintf(TEXT("OPENSSL_CONF=%s\\config\\openssl.cnf"),
         stunnel_exe_path));
     crypto_init(tstr2str(stunnel_exe_path)); /* initialize libcrypto */
+#endif // NO_OPENSSLOFF
 
     if(WSAStartup(MAKEWORD(2, 2), &wsa_state))
         return 1;
