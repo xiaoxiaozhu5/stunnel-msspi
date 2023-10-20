@@ -62,12 +62,12 @@ my $certmgr = $CproPath . "/bin/" . $arch_suffix . "/certmgr";
     #_RunCmd('Restart csp-daemon', "/etc/init.d/cprocsp restart");
     
     #new certs
-    _RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -km -dm -ex -ca http://cryptopro.ru/certsrv -enable-install-root");
-    _RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -km -dm -both -ca http://cryptopro.ru/certsrv -enable-install-root");
+    _RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -km -dm -ex -ca http://testgost2012.cryptopro.ru/certsrv -enable-install-root");
+    _RunCmd('MakeCertGOST', $cryptcp . " -creatcert -provtype 81 -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -km -dm -both -ca http://testgost2012.cryptopro.ru/certsrv -enable-install-root");
  
     #old certs (могут быть ошибки из-за упоминания о старых сертификатах)
-    #_RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -km -dm -ex -ca http://cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
-    #_RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -km -dm -both -ca http://cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
+    #_RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'CN=127.0.0.1\' -cont \'\\\\.\\HDIMAGE\\localhost_cont\' -certusage 1.3.6.1.5.5.7.3.1 -km -dm -ex -ca http://testgost2012.cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
+    #_RunCmd('MakeCertGOST', "/opt/cprocsp/bin/amd64/cryptcp -creatcert -provtype 75 -provname 'Crypto-Pro GOST R 34.10-2001 KC1 CSP'  -silent -rdn \'E=cln512ecryptopro.ru, CN=cln512e\' -cont \'\\\\.\\HDIMAGE\\cln512e\' -certusage 1.3.6.1.5.5.7.3.2 -km -dm -both -ca http://testgost2012.cryptopro.ru/certsrv -keysize 512 -hashalg 1.2.643.2.2.9 -enable-install-root");
     
     #export certs
     _RunCmd('Safe cert in '.$DataPath, $certmgr . " -export -cert -dest " . $DataPath . "stunnelsrv.cer -dn CN=127.0.0.1 -store mmy");
